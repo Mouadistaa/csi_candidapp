@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Utilisateurs</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-6">
+<div class="max-w-4xl mx-auto">
+    <h1 class="text-2xl font-bold mb-4">Utilisateurs</h1>
+    <div id="alert" class="mb-4 text-red-600"></div>
+    <div class="overflow-x-auto">
+        <table class="min-w-full bg-white shadow rounded">
+            <thead>
+            <tr class="bg-gray-200 text-left">
+                <th class="px-4 py-2">ID</th>
+                <th class="px-4 py-2">Email</th>
+                <th class="px-4 py-2">Mot de passe</th>
+            </tr>
+            </thead>
+            <tbody id="tbody">
+            <tr><td colspan="4" class="p-4 text-center">Chargement...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    async function loadUsers(){
+        const alertEl = document.getElementById('alert');
+        const tbody = document.getElementById('tbody');
+        try {
+            const res = await fetch('/api/utilisateurs');
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const users = await res.json();
+            if (!Array.isArray(users)) throw new Error('Réponse inattendue');
+            tbody.innerHTML = users.map(u => `
+          <tr class="border-t">
+            <td class="px-4 py-2">${u.id ?? ''}</td>
+            <td class="px-4 py-2">${u.email ?? ''}</td>
+            <td class="px-4 py-2">${u.password_hash ?? ''}</td>
+          </tr>
+        `).join('');
+        } catch (err) {
+            alertEl.textContent = 'Erreur: ' + (err.message || err);
+            tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-gray-600">Impossible de charger</td></tr>';
+        }
+    }
+    loadUsers();
+</script>
+</body>
+</html>
