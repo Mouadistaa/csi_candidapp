@@ -9,7 +9,18 @@ export async function loginHandler(req: Request, res: Response) {
     const user = await authenticate(email, password);
     if (!user) return res.status(401).json({ error: 'INVALID_CREDENTIALS' });
 
-    res.json({ ok: true, user });
+    // REDIRECTION CONDITIONNELLE SELON LE RÔLE
+    let redirectUrl = '/profile'; // Défaut étudiant
+
+    if (user.role === 'ENSEIGNANT' || user.role === 'ADMIN') {
+      redirectUrl = '/enseignant/dashboard';
+    }
+
+    res.json({
+      ok: true,
+      user,
+      redirectUrl
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'INTERNAL_ERROR' });

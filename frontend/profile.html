@@ -324,8 +324,20 @@
 
     // Fonction pour charger les candidatures
     async function loadCandidatures() {
+      const user = JSON.parse(sessionStorage.getItem('user') || 'null');
+      if (!user || user.role !== 'ETUDIANT') {
+        // Si pas étudiant, ne pas charger les candidatures
+        document.getElementById('candidaturesLoading').classList.add('hidden');
+        document.getElementById('candidaturesEmpty').classList.remove('hidden');
+        return;
+      }
+
       try {
-        const response = await fetch('/api/mes-candidatures');
+        const response = await fetch('/api/mes-candidatures', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: user.id, role: user.role })
+        });
         const data = await response.json();
 
         document.getElementById('candidaturesLoading').classList.add('hidden');

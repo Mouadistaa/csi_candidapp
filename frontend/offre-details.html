@@ -421,12 +421,19 @@
             if (existingError) existingError.remove();
 
             try {
+                const user = JSON.parse(sessionStorage.getItem('user') || 'null');
+                if (!user || !user.id) {
+                    showErrorMessage('Vous devez être connecté pour postuler');
+                    resetButton();
+                    return;
+                }
+
                 const response = await fetch('/api/candidatures', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ offre_id: offreId })
+                    body: JSON.stringify({ offre_id: offreId, userId: user.id })
                 });
 
                 const data = await response.json();

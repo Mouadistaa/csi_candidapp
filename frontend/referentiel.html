@@ -1,0 +1,480 @@
+<!doctype html>
+<html lang="fr">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Référentiel Légal - Candidapp Enseignant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            200: '#c7d2fe',
+                            300: '#a5b4fc',
+                            400: '#818cf8',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            800: '#3730a3',
+                            900: '#312e81',
+                        },
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #a855f7 100%);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo -->
+                <a href="/enseignant/dashboard" class="flex items-center space-x-2">
+                    <div class="w-10 h-10 gradient-bg rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                        </svg>
+                    </div>
+                    <div>
+                        <span class="text-xl font-bold text-gray-900">Candidapp</span>
+                        <span class="text-xs text-gray-500 block">Espace Enseignant</span>
+                    </div>
+                </a>
+
+                <!-- Navigation -->
+                <div class="flex items-center space-x-6">
+                    <a href="/enseignant/dashboard" class="text-gray-600 hover:text-gray-900 transition">Dashboard</a>
+                    <a href="/enseignant/referentiel"
+                        class="text-primary-600 font-semibold border-b-2 border-primary-600 pb-1">Référentiel Légal</a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Page Header -->
+    <section class="gradient-bg text-white py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-4xl font-bold mb-2">Référentiel Légal</h1>
+                    <p class="text-purple-200">Gérez les règles de validation automatique des offres (Salaire min,
+                        Durée, Pays)
+                    </p>
+                </div>
+                <button id="btnAjouterRegle"
+                    class="flex items-center space-x-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm px-5 py-3 rounded-lg font-semibold transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    <span>Ajouter une règle</span>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <!-- Loading State -->
+        <div id="loadingState" class="bg-white rounded-xl shadow-sm p-8">
+            <div class="flex flex-col items-center justify-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mb-4"></div>
+                <p class="text-gray-600">Chargement des règles légales...</p>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="hidden bg-white rounded-xl shadow-sm p-12">
+            <div class="text-center">
+                <svg class="w-24 h-24 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">Aucune règle légale définie</h3>
+                <p class="text-gray-600 mb-6">Commencez par créer votre première règle de validation.</p>
+                <button onclick="openModal()"
+                    class="inline-flex items-center space-x-2 bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-lg font-semibold transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    <span>Créer une règle</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div id="tableContainer" class="hidden bg-white rounded-xl shadow-sm overflow-hidden">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pays
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type
+                            de Contrat
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Salaire Min</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Unité</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Durée
+                            Min
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Durée
+                            Max
+                        </th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody" class="bg-white divide-y divide-gray-200">
+                    <!-- Populated by JS -->
+                </tbody>
+            </table>
+        </div>
+
+    </main>
+
+    <!-- Modal Formulaire -->
+    <div id="modalForm" class="modal">
+        <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full mx-4 p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h2 id="modalTitle" class="text-2xl font-bold text-gray-900">Ajouter une règle légale</h2>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <form id="regleForm" class="space-y-4">
+                <input type="hidden" id="regleId" />
+
+                <div>
+                    <label for="pays" class="block text-sm font-medium text-gray-700 mb-1">Pays *</label>
+                    <input type="text" id="pays" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        placeholder="France, Belgique, etc.">
+                </div>
+
+                <div>
+                    <label for="type_contrat" class="block text-sm font-medium text-gray-700 mb-1">Type de Contrat
+                        *</label>
+                    <select id="type_contrat" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                        <option value="">-- Sélectionnez --</option>
+                        <option value="STAGE">Stage</option>
+                        <option value="ALTERNANCE">Alternance</option>
+                        <option value="CDD">CDD</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="remuneration_min" class="block text-sm font-medium text-gray-700 mb-1">Salaire Minimum
+                        (€/mois)
+                        *</label>
+                    <input type="number" id="remuneration_min" required min="0" step="0.01"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        placeholder="600.00">
+                </div>
+
+                <div>
+                    <label for="unite" class="block text-sm font-medium text-gray-700 mb-1">Unité *</label>
+                    <select id="unite" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                        <option value="">-- Sélectionnez --</option>
+                        <option value="MOIS">Par mois</option>
+                        <option value="SEMAINE">Par semaine</option>
+                        <option value="ANNEE">Par an</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="duree_min_mois" class="block text-sm font-medium text-gray-700 mb-1">Durée Min
+                        </label>
+                        <input type="number" id="duree_min_mois" min="0"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                            placeholder="2">
+                    </div>
+                    <div>
+                        <label for="duree_max_mois" class="block text-sm font-medium text-gray-700 mb-1">Durée Max
+                        </label>
+                        <input type="number" id="duree_max_mois" min="0"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                            placeholder="6">
+                    </div>
+                </div>
+
+                <div>
+                    <label for="date_effet" class="block text-sm font-medium text-gray-700 mb-1">Date d'Effet</label>
+                    <input type="date" id="date_effet"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+                    <p class="text-xs text-gray-500 mt-1">Si vide, la date du jour sera utilisée</p>
+                </div>
+
+                <div class="flex justify-end space-x-3 pt-4 border-t">
+                    <button type="button" onclick="closeModal()"
+                        class="px-5 py-2.5 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-semibold transition">
+                        Annuler
+                    </button>
+                    <button type="submit"
+                        class="px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-semibold transition">
+                        <span id="btnSubmitText">Créer</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let currentRegleId = null;
+        let reglesData = [];
+
+        // ==================== MODAL ====================
+        function openModal(regle = null) {
+            const modal = document.getElementById('modalForm');
+            const modalTitle = document.getElementById('modalTitle');
+            const btnSubmitText = document.getElementById('btnSubmitText');
+            const form = document.getElementById('regleForm');
+
+            if (regle) {
+                // Mode édition
+                currentRegleId = regle.regle_id;
+                modalTitle.textContent = 'Modifier une règle légale';
+                btnSubmitText.textContent = 'Mettre à jour';
+                document.getElementById('regleId').value = regle.regle_id;
+                document.getElementById('pays').value = regle.pays;
+                document.getElementById('type_contrat').value = regle.type_contrat;
+                document.getElementById('remuneration_min').value = regle.remuneration_min;
+                document.getElementById('unite').value = regle.unite;
+                document.getElementById('duree_min_mois').value = regle.duree_min_mois || '';
+                document.getElementById('duree_max_mois').value = regle.duree_max_mois || '';
+                document.getElementById('date_effet').value = regle.date_effet ? regle.date_effet.split('T')[0] : '';
+            } else {
+                // Mode création
+                currentRegleId = null;
+                modalTitle.textContent = 'Ajouter une règle légale';
+                btnSubmitText.textContent = 'Créer';
+                form.reset();
+            }
+
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('modalForm');
+            modal.classList.remove('active');
+            document.getElementById('regleForm').reset();
+            currentRegleId = null;
+        }
+
+        // ==================== CRUD OPERATIONS ====================
+        async function loadRegles() {
+            try {
+                const response = await fetch('/api/enseignant/referentiel');
+                const data = await response.json();
+
+                document.getElementById('loadingState').classList.add('hidden');
+
+                if (!data.ok || data.regles.length === 0) {
+                    document.getElementById('emptyState').classList.remove('hidden');
+                    return;
+                }
+
+                reglesData = data.regles;
+                displayRegles(data.regles);
+
+            } catch (error) {
+                console.error('Erreur:', error);
+                document.getElementById('loadingState').classList.add('hidden');
+                showToast('Erreur lors du chargement des règles', 'error');
+            }
+        }
+
+        function displayRegles(regles) {
+            const tableBody = document.getElementById('tableBody');
+            tableBody.innerHTML = '';
+
+            regles.forEach(regle => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50 transition';
+                row.innerHTML = `
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="flex items-center">
+              <span class="text-sm font-medium text-gray-900">${regle.pays}</span>
+            </div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getTypeBadgeClass(regle.type_contrat)}">
+              ${regle.type_contrat}
+            </span>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${regle.remuneration_min} €</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${regle.unite}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${regle.duree_min_mois || '-'}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${regle.duree_max_mois || '-'}</td>
+          <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+            <button onclick='editRegle(${JSON.stringify(regle).replace(/'/g, "&#39;")})' 
+              class="text-primary-600 hover:text-primary-900 mr-3">
+              <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </button>
+            <button onclick="deleteRegle(${regle.regle_id})" 
+              class="text-red-600 hover:text-red-900">
+              <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </td>
+        `;
+                tableBody.appendChild(row);
+            });
+
+            document.getElementById('tableContainer').classList.remove('hidden');
+        }
+
+        function getTypeBadgeClass(type) {
+            const classes = {
+                'STAGE': 'bg-blue-100 text-blue-800',
+                'ALTERNANCE': 'bg-yellow-100 text-yellow-800',
+                'CDD': 'bg-purple-100 text-purple-800'
+            };
+            return classes[type] || 'bg-gray-100 text-gray-800';
+        }
+
+        function editRegle(regle) {
+            openModal(regle);
+        }
+
+        async function deleteRegle(id) {
+            if (!confirm('Êtes-vous sûr de vouloir supprimer cette règle ?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/enseignant/referentiel/${id}`, {
+                    method: 'DELETE'
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showToast('Règle supprimée avec succès', 'success');
+                    loadRegles();
+                } else {
+                    showToast(data.error || 'Erreur lors de la suppression', 'error');
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                showToast('Erreur technique', 'error');
+            }
+        }
+
+        // ==================== FORM SUBMIT ====================
+        document.getElementById('regleForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = {
+                pays: document.getElementById('pays').value,
+                type_contrat: document.getElementById('type_contrat').value,
+                remuneration_min: parseFloat(document.getElementById('remuneration_min').value),
+                unite: document.getElementById('unite').value,
+                duree_min_mois: document.getElementById('duree_min_mois').value ? parseInt(document.getElementById('duree_min_mois').value) : null,
+                duree_max_mois: document.getElementById('duree_max_mois').value ? parseInt(document.getElementById('duree_max_mois').value) : null,
+                date_effet: document.getElementById('date_effet').value || null
+            };
+
+            try {
+                let response;
+                if (currentRegleId) {
+                    // Update
+                    response = await fetch(`/api/enseignant/referentiel/${currentRegleId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(formData)
+                    });
+                } else {
+                    // Create
+                    response = await fetch('/api/enseignant/referentiel', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(formData)
+                    });
+                }
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showToast(currentRegleId ? 'Règle mise à jour' : 'Règle créée avec succès', 'success');
+                    closeModal();
+                    loadRegles();
+                } else {
+                    showToast(data.error || 'Erreur lors de l\'enregistrement', 'error');
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                showToast('Erreur technique', 'error');
+            }
+        });
+
+        // ==================== HELPERS ====================
+        function showToast(message, type = 'success') {
+            const bgColor = type === 'success' ? 'bg-green-600' : 'bg-red-600';
+            const toast = document.createElement('div');
+            toast.className = `fixed top-24 right-4 ${bgColor} text-white px-6 py-4 rounded-lg shadow-lg flex items-center space-x-3 z-50`;
+            toast.innerHTML = `
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${type === 'success' ? 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' : 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'}" />
+        </svg>
+        <span class="font-semibold">${message}</span>
+      `;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // ==================== EVENT LISTENERS ====================
+        document.getElementById('btnAjouterRegle').addEventListener('click', () => openModal());
+
+        // Load on page load
+        loadRegles();
+    </script>
+
+</body>
+
+</html>

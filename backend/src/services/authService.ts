@@ -4,10 +4,11 @@ export type AuthenticatedUser = {
   id: number;
   email: string;
   nom?: string | null;
+  role: string;
 };
 
 export async function authenticate(email: string, password: string): Promise<AuthenticatedUser | null> {
-  const res = await query('SELECT id, email, password_hash FROM "Utilisateur" WHERE email = $1 LIMIT 1', [email]);
+  const res = await query('SELECT id, email, password_hash, role FROM "Utilisateur" WHERE email = $1 LIMIT 1', [email]);
   const row = res.rows[0];
   if (!row) return null;
 
@@ -32,5 +33,6 @@ export async function authenticate(email: string, password: string): Promise<Aut
     id: row.id,
     email: row.email,
     nom: null,
+    role: row.role,
   };
 }

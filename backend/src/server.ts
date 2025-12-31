@@ -4,6 +4,7 @@ import { query } from './config/db';
 import utilisateurRoutes from './routes/utilisateur';
 import authRoutes from './routes/auth';
 import offreRoutes from './routes/offre';
+import enseignantRoutes from './routes/enseignant';
 
 const app = express();
 const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
@@ -14,20 +15,25 @@ app.use(express.json());
 app.use('/api/utilisateurs', utilisateurRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/offres', offreRoutes);
+app.use('/api/enseignant', enseignantRoutes);
 
 // Route POST /api/candidatures - Postuler à une offre
 app.post('/api/candidatures', async (req, res) => {
-    const { offre_id } = req.body;
+    const { offre_id, userId } = req.body;
 
     if (!offre_id) {
         return res.status(400).json({ ok: false, error: 'offre_id est requis' });
+    }
+
+    if (!userId) {
+        return res.status(400).json({ ok: false, error: 'userId requis' });
     }
 
     try {
         // Insertion "write-only" - SANS clause RETURNING
         await query(
             'INSERT INTO v_action_postuler (offre_id, etudiant_id, source) VALUES ($1, $2, $3)',
-            [offre_id, 1, 'Plateforme Web']
+            [offre_id, userId, 'Plateforme Web']
         );
 
         // Si aucune erreur, c'est un succès
@@ -48,7 +54,26 @@ app.post('/api/candidatures', async (req, res) => {
 });
 
 // Route GET /api/mes-candidatures - Récupérer les candidatures de l'étudiant
-app.get('/api/mes-candidatures', async (_req, res) => {
+// SÉCURISÉ : Requiert userId dans le corps de la requête
+app.post('/api/mes-candidatures', async (req, res) => {
+    const { userId, role } = req.body;
+
+    // Validation de sécurité : L'utilisateur doit fournir son ID et être ETUDIANT
+    if (!userId) {
+        return res.status(400).json({
+            ok: false,
+            error: 'userId requis'
+        });
+    }
+
+    // Protection : Si ce n'est pas un étudiant, refuser l'accès
+    if (role !== 'ETUDIANT') {
+        return res.status(403).json({
+            ok: false,
+            error: 'Accès interdit - Cette API est réservée aux étudiants'
+        });
+    }
+
     try {
         const result = await query(
             `SELECT 
@@ -62,7 +87,7 @@ app.get('/api/mes-candidatures', async (_req, res) => {
             FROM v_mes_candidatures_etudiant
             WHERE utilisateur_id = $1
             ORDER BY date_candidature DESC`,
-            [1] // ID hardcodé pour Alice (prototype)
+            [userId] // ID provenant de l'utilisateur authentifié
         );
 
         return res.status(200).json({
@@ -81,10 +106,14 @@ app.get('/api/mes-candidatures', async (_req, res) => {
 
 // Route POST /api/candidatures/annuler - Annuler une candidature
 app.post('/api/candidatures/annuler', async (req, res) => {
-    const { candidature_id } = req.body;
+    const { candidature_id, userId } = req.body;
 
     if (!candidature_id) {
         return res.status(400).json({ ok: false, error: 'candidature_id est requis' });
+    }
+
+    if (!userId) {
+        return res.status(400).json({ ok: false, error: 'userId requis' });
     }
 
     try {
@@ -93,7 +122,7 @@ app.post('/api/candidatures/annuler', async (req, res) => {
             `UPDATE v_action_annuler_candidature 
             SET statut = 'ANNULE' 
             WHERE candidature_id = $1 AND etudiant_id = $2`,
-            [candidature_id, 1] // etudiant_id hardcodé à 1 pour le prototype
+            [candidature_id, userId] // Utilisation du userId authentifié
         );
 
         return res.status(200).json({
@@ -141,6 +170,14 @@ app.get('/offres/:id', (_req, res) => {
 
 app.get('/candidatures', (_req, res) => {
     res.sendFile(path.join(__dirname, '..', '..', 'frontend', 'candidatures.html'));
+});
+
+app.get('/enseignant/dashboard', (_req, res) => {
+    res.sendFile(path.join(__dirname, '..', '..', 'frontend', 'dashboard-enseignant.html'));
+});
+
+app.get('/enseignant/referentiel', (_req, res) => {
+    res.sendFile(path.join(__dirname, '..', '..', 'frontend', 'referentiel.html'));
 });
 
 // Serve frontend static files (CSS, JS, images, etc.)

@@ -209,12 +209,21 @@
       `;
 
             try {
+                const user = JSON.parse(sessionStorage.getItem('user') || 'null');
+                if (!user || !user.id) {
+                    showToast('Vous devez être connecté', 'error');
+                    btnAnnuler.disabled = false;
+                    btnAnnuler.classList.remove('opacity-50', 'cursor-not-allowed');
+                    btnAnnuler.innerHTML = originalBtnContent;
+                    return;
+                }
+
                 const response = await fetch('/api/candidatures/annuler', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ candidature_id: candidatureId })
+                    body: JSON.stringify({ candidature_id: candidatureId, userId: user.id })
                 });
 
                 const data = await response.json();
@@ -271,8 +280,20 @@
 
         // Fonction pour charger les candidatures
         async function loadCandidatures() {
+            const user = JSON.parse(sessionStorage.getItem('user') || 'null');
+
+            if (!user || user.role !== 'ETUDIANT') {
+                document.getElementById('loadingState').classList.add('hidden');
+                document.getElementById('emptyState').classList.remove('hidden');
+                return;
+            }
+
             try {
-                const response = await fetch('/api/mes-candidatures');
+                const response = await fetch('/api/mes-candidatures', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: user.id, role: user.role })
+                });
                 const data = await response.json();
 
                 document.getElementById('loadingState').classList.add('hidden');
