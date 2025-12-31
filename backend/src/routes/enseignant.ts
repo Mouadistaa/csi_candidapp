@@ -6,7 +6,8 @@ import {
     deleteRegleLegale,
     getDashboardStats,
     getOffresConformite,
-    reviewOffre
+    reviewOffre,
+    getArchivesStages
 } from '../controllers/enseignantController';
 
 const router = Router();
@@ -21,5 +22,8 @@ router.delete('/referentiel/:id', deleteRegleLegale);
 router.get('/stats', getDashboardStats);
 router.get('/offres-conformite', getOffresConformite);
 router.post('/offres/:id/review', reviewOffre);
+
+// ==================== ARCHIVES ====================
+router.get('/archives', getArchivesStages);
 
 export default router;

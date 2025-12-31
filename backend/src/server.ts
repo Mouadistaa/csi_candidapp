@@ -5,6 +5,7 @@ import utilisateurRoutes from './routes/utilisateur';
 import authRoutes from './routes/auth';
 import offreRoutes from './routes/offre';
 import enseignantRoutes from './routes/enseignant';
+import secretaireRoutes from './routes/secretaire';
 
 const app = express();
 const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
@@ -16,6 +17,7 @@ app.use('/api/utilisateurs', utilisateurRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/offres', offreRoutes);
 app.use('/api/enseignant', enseignantRoutes);
+app.use('/api/dashboard/secretaire', secretaireRoutes);
 
 // Route POST /api/candidatures - Postuler à une offre
 app.post('/api/candidatures', async (req, res) => {
@@ -178,6 +180,14 @@ app.get('/enseignant/dashboard', (_req, res) => {
 
 app.get('/enseignant/referentiel', (_req, res) => {
     res.sendFile(path.join(__dirname, '..', '..', 'frontend', 'referentiel.html'));
+});
+
+app.get('/enseignant/archives', (_req, res) => {
+    res.sendFile(path.join(__dirname, '..', '..', 'frontend', 'archives.html'));
+});
+
+app.get('/secretaire/dashboard', (_req, res) => {
+    res.sendFile(path.join(__dirname, '..', '..', 'frontend', 'dashboard-secretaire.html'));
 });
 
 // Serve frontend static files (CSS, JS, images, etc.)

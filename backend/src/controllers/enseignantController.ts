@@ -256,3 +256,36 @@ export const reviewOffre = async (req: Request, res: Response) => {
         });
     }
 };
+
+// ==================== ARCHIVES ====================
+
+// GET /api/enseignant/archives - Récupérer l'historique des stages validés
+export const getArchivesStages = async (req: Request, res: Response) => {
+    const { promo } = req.query;
+
+    try {
+        let result;
+
+        if (promo) {
+            // Filtrage par promotion
+            result = await query(
+                'SELECT * FROM v_archives_stages WHERE etudiant_promo = $1 ORDER BY date_debut_stage DESC',
+                [promo]
+            );
+        } else {
+            // Sans filtre : renvoie tout
+            result = await query('SELECT * FROM v_archives_stages ORDER BY date_debut_stage DESC');
+        }
+
+        return res.status(200).json({
+            ok: true,
+            archives: result.rows
+        });
+    } catch (error: any) {
+        console.error('Erreur lors de la récupération des archives:', error);
+        return res.status(500).json({
+            ok: false,
+            error: 'Erreur lors de la récupération des archives'
+        });
+    }
+};

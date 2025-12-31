@@ -78,6 +78,9 @@
                     <a href="/enseignant/dashboard" class="text-gray-600 hover:text-gray-900 transition">Dashboard</a>
                     <a href="/enseignant/referentiel"
                         class="text-primary-600 font-semibold border-b-2 border-primary-600 pb-1">Référentiel Légal</a>
+                    <a href="/enseignant/archives" class="text-gray-600 hover:text-gray-900 transition">Archives</a>
+                    <button id="logoutBtn"
+                        class="text-red-600 hover:text-red-800 font-medium transition">Déconnexion</button>
                 </div>
             </div>
         </nav>
@@ -470,6 +473,12 @@
 
         // ==================== EVENT LISTENERS ====================
         document.getElementById('btnAjouterRegle').addEventListener('click', () => openModal());
+
+        // Déconnexion
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            sessionStorage.clear();
+            window.location.href = '/login.html';
+        });
 
         // Load on page load
         loadRegles();

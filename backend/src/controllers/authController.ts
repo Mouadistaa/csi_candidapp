@@ -14,6 +14,8 @@ export async function loginHandler(req: Request, res: Response) {
 
     if (user.role === 'ENSEIGNANT' || user.role === 'ADMIN') {
       redirectUrl = '/enseignant/dashboard';
+    } else if (user.role === 'SECRETAIRE') {
+      redirectUrl = '/secretaire/dashboard';
     }
 
     res.json({
