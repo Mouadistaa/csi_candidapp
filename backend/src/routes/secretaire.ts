@@ -1,9 +1,16 @@
 import { Router } from 'express';
-import { getDashboardStats } from '../controllers/secretaireController';
+import * as secCtrl from '../controllers/secretaireController';
 
 const router = Router();
 
 // ==================== DASHBOARD SECRÉTAIRE ====================
-router.get('/stats', getDashboardStats);
+router.get('/stats', secCtrl.getDashboardStats);
+
+// Gestion des Attestations
+router.get('/attestations', secCtrl.getAttestationsAValider);
+router.post('/valider-rc', secCtrl.validerAttestation);
+
+// Gestion des Étudiants
+router.post('/etudiants', secCtrl.creerEtudiant);
 
 export default router;

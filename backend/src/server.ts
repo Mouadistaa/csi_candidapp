@@ -8,6 +8,7 @@ import enseignantRoutes from './routes/enseignant';
 import secretaireRoutes from './routes/secretaire';
 import candidatureRoutes from './routes/candidature';
 import attestationRCRoutes from './routes/attestationRC';
+import entrepriseRoutes from './routes/entreprise';
 
 const app = express();
 const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
@@ -22,6 +23,7 @@ app.use('/api/enseignant', enseignantRoutes);
 app.use('/api/dashboard/secretaire', secretaireRoutes);
 app.use('/api/attestation-rc', attestationRCRoutes);
 app.use('/api/candidatures', candidatureRoutes);
+app.use('/api/entreprise', entrepriseRoutes); 
 
 app.get('/', (_req, res) => {
     res.sendFile(path.join(__dirname, '..', '..', 'frontend', 'accueil.html'));
