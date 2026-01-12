@@ -31,6 +31,10 @@ app.get('/login', (_req, res) => {
     res.sendFile(path.join(__dirname, '..', '..', 'frontend', 'login.html'));
 });
 
+app.get('/register_entreprise.html', (_req, res) => {
+    res.sendFile(path.join(__dirname, '..', '..', 'frontend', 'register_entreprise.html'));
+});
+
 app.get('/profile', (_req, res) => {
     res.sendFile(path.join(__dirname, '..', '..', 'frontend', 'profile.html'));
 });
@@ -74,6 +78,8 @@ async function start() {
     try {
         const result = await query('SELECT NOW() AS now');
         console.log('DB OK:', result.rows[0]);
+        const tables = await query("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' OR table_schema = 'm1user1_04';");
+        console.log('TABLES VISIBLES :', tables.rows);
     } catch (err) {
         console.error('DB ERROR:', err);
         process.exit(1);
