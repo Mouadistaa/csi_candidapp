@@ -63,65 +63,93 @@
         </div>
 
         <form id="registerForm" class="space-y-5">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Nom de l'entreprise (raison sociale)</label>
-            <div class="relative">
-              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                </svg>
+          
+          <div class="border-b pb-4 mb-4">
+            <h2 class="text-lg font-semibold text-gray-700 mb-4">Informations Société</h2>
+            
+            <div class="mb-4">
+              <label class="block text-sm font-medium text-gray-700 mb-2">Raison Sociale <span class="text-red-500">*</span></label>
+              <div class="relative">
+                <input id="raisonSociale" type="text" required placeholder="Ex: TechCorp Solutions"
+                  class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition" />
               </div>
-              <input id="raisonSociale" type="text" required placeholder="Ex: TechCorp SAS"
-                class="block w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition" />
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Numéro SIRET <span class="text-red-500">*</span></label>
+                <input id="siret" type="text" required placeholder="14 chiffres" pattern="[0-9]{14}" title="14 chiffres requis"
+                  class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Site Web</label>
+                <input id="siteWeb" type="url" placeholder="https://..."
+                  class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition" />
+              </div>
+            </div>
+          </div>
+
+          <div class="border-b pb-4 mb-4">
+            <h2 class="text-lg font-semibold text-gray-700 mb-4">Localisation</h2>
+            
+            <div class="mb-4">
+              <label class="block text-sm font-medium text-gray-700 mb-2">Adresse postale <span class="text-red-500">*</span></label>
+              <input id="adresse" type="text" required placeholder="Ex: 12 Rue de l'Innovation"
+                class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition" />
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Ville <span class="text-red-500">*</span></label>
+                <input id="ville" type="text" required placeholder="Ex: Lyon"
+                  class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Pays <span class="text-red-500">*</span></label>
+                <select id="pays" required class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition bg-white">
+                  <option value="France" selected>France</option>
+                  <option value="Belgique">Belgique</option>
+                  <option value="Suisse">Suisse</option>
+                  <option value="Luxembourg">Luxembourg</option>
+                  <option value="Allemagne">Allemagne</option>
+                  <option value="Autre">Autre</option>
+                </select>
+              </div>
             </div>
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Adresse email</label>
-            <div class="relative">
-              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
-                </svg>
-              </div>
-              <input id="email" type="email" required placeholder="contact@entreprise.com"
-                class="block w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition" />
-            </div>
-          </div>
+            <h2 class="text-lg font-semibold text-gray-700 mb-4">Compte & Contact</h2>
 
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Mot de passe</label>
-            <div class="relative">
-              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-              </div>
-              <input id="password" type="password" required placeholder="••••••••"
-                class="block w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition" />
+            <div class="mb-4">
+              <label class="block text-sm font-medium text-gray-700 mb-2">Nom du Contact RH <span class="text-red-500">*</span></label>
+              <input id="contactNom" type="text" required placeholder="Ex: Jean Dupont"
+                class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition" />
             </div>
-          </div>
 
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Confirmation mot de passe</label>
-            <div class="relative">
-              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
+            <div class="mb-4">
+              <label class="block text-sm font-medium text-gray-700 mb-2">Email de connexion <span class="text-red-500">*</span></label>
+              <input id="email" type="email" required placeholder="rh@entreprise.com"
+                class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition" />
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Mot de passe <span class="text-red-500">*</span></label>
+                <input id="password" type="password" required placeholder="••••••••" minlength="6"
+                  class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition" />
               </div>
-              <input id="passwordConfirm" type="password" required placeholder="••••••••"
-                class="block w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition" />
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Confirmation <span class="text-red-500">*</span></label>
+                <input id="passwordConfirm" type="password" required placeholder="••••••••"
+                  class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition" />
+              </div>
             </div>
           </div>
 
           <button type="submit" id="submitBtn"
-            class="w-full py-3 px-4 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition transform hover:-translate-y-0.5">
-            Créer mon compte
+            class="w-full mt-6 py-3 px-4 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition transform hover:-translate-y-0.5">
+            Finaliser l'inscription
           </button>
         </form>
 
@@ -145,64 +173,72 @@
       const errorEl = document.getElementById('error');
       const submitBtn = document.getElementById('submitBtn');
 
+      // Reset visuel
       errorEl.classList.add('hidden');
       errorEl.textContent = '';
       submitBtn.disabled = true;
-      submitBtn.textContent = 'Création du compte...';
+      submitBtn.textContent = 'Inscription en cours...';
 
-      const raisonSociale = document.getElementById('raisonSociale').value.trim();
-      const email = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value;
-      const passwordConfirm = document.getElementById('passwordConfirm').value;
+      // 1. Récupération des valeurs (Mise à jour pour inclure les nouveaux champs)
+      const formData = {
+        raisonSociale: document.getElementById('raisonSociale').value.trim(),
+        siret: document.getElementById('siret').value.trim(),
+        siteWeb: document.getElementById('siteWeb').value.trim(),
+        adresse: document.getElementById('adresse').value.trim(),
+        ville: document.getElementById('ville').value.trim(),
+        pays: document.getElementById('pays').value,
+        contactNom: document.getElementById('contactNom').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        password: document.getElementById('password').value,
+        passwordConfirm: document.getElementById('passwordConfirm').value
+      };
 
-      // Validation
-      if (!raisonSociale || !email || !password || !passwordConfirm) {
-        errorEl.textContent = 'Veuillez remplir tous les champs';
-        errorEl.classList.remove('hidden');
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Créer mon compte';
+      // 2. Validation Côté Client
+      if (!formData.raisonSociale || !formData.email || !formData.password || 
+          !formData.siret || !formData.adresse || !formData.ville || 
+          !formData.pays || !formData.contactNom) {
+        
+        showError('Veuillez remplir tous les champs obligatoires (*)');
         return;
       }
 
-      if (password !== passwordConfirm) {
-        errorEl.textContent = 'Les mots de passe ne correspondent pas';
-        errorEl.classList.remove('hidden');
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Créer mon compte';
+      if (formData.password !== formData.passwordConfirm) {
+        showError('Les mots de passe ne correspondent pas');
         return;
       }
 
-      if (password.length < 6) {
-        errorEl.textContent = 'Le mot de passe doit contenir au moins 6 caractères';
-        errorEl.classList.remove('hidden');
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Créer mon compte';
+      if (formData.password.length < 6) {
+        showError('Le mot de passe doit contenir au moins 6 caractères');
         return;
       }
 
       try {
+        // 3. Envoi au Backend
         const res = await fetch('/api/auth/register-entreprise', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ raisonSociale, email, password })
+          body: JSON.stringify(formData) // On envoie l'objet complet
         });
 
-        const data = await res.json();
+        const result = await res.json();
+        
         if (!res.ok) {
-          errorEl.textContent = data.error || 'Erreur lors de l\'inscription';
-          errorEl.classList.remove('hidden');
-          submitBtn.disabled = false;
-          submitBtn.textContent = 'Créer mon compte';
-          return;
+          throw new Error(result.error || 'Erreur lors de l\'inscription');
         }
 
-        // Succès : redirection vers login avec message
-        window.location.href = '/login?success=Compte créé avec succès';
+        // Succès
+        window.location.href = '/login?success=Compte créé avec succès ! Connectez-vous.';
+        
       } catch (err) {
-        errorEl.textContent = 'Erreur de connexion au serveur';
+        showError(err.message);
+      }
+
+      // Fonction utilitaire pour afficher l'erreur
+      function showError(msg) {
+        errorEl.textContent = msg;
         errorEl.classList.remove('hidden');
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Créer mon compte';
+        submitBtn.textContent = 'Finaliser l\'inscription';
       }
     });
   </script>

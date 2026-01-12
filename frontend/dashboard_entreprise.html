@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="fr">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Dashboard Entreprise - Candidapp</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            200: '#c7d2fe',
+                            300: '#a5b4fc',
+                            400: '#818cf8',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            800: '#3730a3',
+                            900: '#312e81',
+                        },
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #a855f7 100%);
+        }
+
+        .card-hover {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 min-h-screen">
+
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <a href="/dashboard/entreprise" class="flex items-center space-x-2">
+                    <div class="w-10 h-10 gradient-bg rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        </svg>
+                    </div>
+                    <div>
+                        <span class="text-xl font-bold text-gray-900">Candidapp</span>
+                        <span class="text-xs text-gray-500 block">Espace Recruteur</span>
+                    </div>
+                </a>
+
+                <div class="flex items-center space-x-6">
+                    <a href="/dashboard/entreprise"
+                        class="text-primary-600 font-semibold border-b-2 border-primary-600 pb-1">Dashboard</a>
+                    <a href="/create-offre" class="text-gray-600 hover:text-gray-900 transition flex items-center">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Publier une offre
+                    </a>
+                    <button id="logoutBtn"
+                        class="text-red-600 hover:text-red-800 font-medium transition">Déconnexion</button>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <section class="gradient-bg text-white py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+            <div>
+                <h1 class="text-4xl font-bold mb-2">Tableau de bord</h1>
+                <p class="text-purple-200">Gérez vos offres de stage et d'alternance et suivez vos candidats.</p>
+            </div>
+            <a href="/create-offre"
+                class="hidden md:inline-flex items-center px-6 py-3 bg-white text-primary-600 font-bold rounded-lg shadow-lg hover:bg-gray-50 transition transform hover:-translate-y-0.5">
+                + Nouvelle Offre
+            </a>
+        </div>
+    </section>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <div class="grid md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-sm p-6 card-hover">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600 mb-1">Offres en ligne</p>
+                        <p id="kpiOffresActives" class="text-3xl font-bold text-gray-900">-</p>
+                    </div>
+                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm p-6 card-hover">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600 mb-1">Candidatures reçues</p>
+                        <p id="kpiCandidatures" class="text-3xl font-bold text-gray-900">-</p>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm p-6 card-hover">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600 mb-1">En attente validation</p>
+                        <p id="kpiAttente" class="text-3xl font-bold text-yellow-600">-</p>
+                    </div>
+                    <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900">Mes Offres</h2>
+                <p class="text-gray-600">Suivi du statut de vos offres et des candidatures associées</p>
+            </div>
+        </div>
+
+        <div id="loadingState" class="bg-white rounded-xl shadow-sm p-8 text-center">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mb-4"></div>
+            <p class="text-gray-600">Chargement de vos données...</p>
+        </div>
+
+        <div id="emptyState" class="hidden bg-white rounded-xl shadow-sm p-12 text-center">
+            <svg class="w-24 h-24 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <h3 class="text-xl font-semibold text-gray-900 mb-2">Aucune offre publiée</h3>
+            <p class="text-gray-600 mb-6">Commencez par publier votre première offre de stage ou d'alternance.</p>
+            <a href="/create-offre" class="inline-flex items-center px-5 py-2.5 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition">
+                Publier une offre
+            </a>
+        </div>
+
+        <div id="offresGrid" class="hidden space-y-4">
+            </div>
+
+    </main>
+
+    <script>
+        // ==================== LOAD STATS ====================
+        async function loadStats() {
+            try {
+                // Créer cette route dans ton backend
+                const response = await fetch('/api/entreprise/stats'); 
+                const data = await response.json();
+
+                if (data.ok) {
+                    document.getElementById('kpiOffresActives').textContent = data.stats.active || 0;
+                    document.getElementById('kpiCandidatures').textContent = data.stats.candidatures || 0;
+                    document.getElementById('kpiAttente').textContent = data.stats.pending || 0;
+                }
+            } catch (error) {
+                console.error('Erreur stats:', error);
+            }
+        }
+
+        // ==================== LOAD OFFRES ====================
+        async function loadOffres() {
+            try {
+                // Créer cette route dans ton backend qui renvoie les offres de l'entreprise connectée
+                const response = await fetch('/api/entreprise/mes-offres');
+                const data = await response.json();
+
+                document.getElementById('loadingState').classList.add('hidden');
+
+                if (!data.ok || data.offres.length === 0) {
+                    document.getElementById('emptyState').classList.remove('hidden');
+                    return;
+                }
+
+                displayOffres(data.offres);
+
+            } catch (error) {
+                console.error('Erreur:', error);
+                document.getElementById('loadingState').classList.add('hidden');
+                showToast('Erreur lors du chargement des offres', 'error');
+            }
+        }
+
+        function displayOffres(offres) {
+            const grid = document.getElementById('offresGrid');
+            grid.innerHTML = '';
+
+            offres.forEach(offre => {
+                const card = document.createElement('div');
+                card.className = `bg-white rounded-xl shadow-sm p-6 card-hover border-l-4 ${getBorderColor(offre.statut_validation)}`;
+                
+                // Nombre de candidats (mockup si pas encore dispo en back)
+                const nbCandidats = offre.nb_candidats || 0;
+
+                card.innerHTML = `
+          <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            
+            <div class="flex-1">
+              <div class="flex items-center gap-3 mb-2">
+                <h3 class="text-xl font-bold text-gray-900">${offre.titre}</h3>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getTypeBadgeClass(offre.type)}">
+                  ${offre.type}
+                </span>
+                ${getStatusBadge(offre.statut_validation)}
+              </div>
+              
+              <div class="flex flex-wrap items-center gap-4 text-sm text-gray-600">
+                <div class="flex items-center">
+                  <svg class="w-4 h-4 mr-1.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  ${offre.localisation_ville}, ${offre.localisation_pays}
+                </div>
+                <div class="flex items-center">
+                   <svg class="w-4 h-4 mr-1.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  Exp: ${formatDate(offre.date_expiration)}
+                </div>
+              </div>
+              
+              ${offre.statut_validation === 'REFUSE' && offre.motif_refus ? `
+                 <p class="text-sm text-red-600 mt-2 font-medium">Motif refus: ${offre.motif_refus}</p>
+              ` : ''}
+            </div>
+
+            <div class="flex items-center gap-6 border-t lg:border-t-0 lg:border-l border-gray-100 pt-4 lg:pt-0 lg:pl-6">
+                <div class="text-center">
+                    <p class="text-xs text-gray-500 font-semibold uppercase tracking-wide">Candidats</p>
+                    <p class="text-2xl font-bold ${nbCandidats > 0 ? 'text-primary-600' : 'text-gray-400'}">${nbCandidats}</p>
+                </div>
+                
+                <div>
+                     <a href="/entreprise/offres/${offre.id}/candidatures" 
+                        class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+                        Gérer
+                     </a>
+                </div>
+            </div>
+          </div>
+        `;
+
+                grid.appendChild(card);
+            });
+
+            grid.classList.remove('hidden');
+        }
+
+        // ==================== HELPERS ====================
+        function formatDate(dateString) {
+            if(!dateString) return 'N/A';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('fr-FR');
+        }
+
+        function getTypeBadgeClass(type) {
+            const classes = {
+                'STAGE': 'bg-blue-100 text-blue-800',
+                'ALTERNANCE': 'bg-purple-100 text-purple-800',
+                'CDD': 'bg-gray-100 text-gray-800'
+            };
+            return classes[type] || 'bg-gray-100 text-gray-800';
+        }
+
+        function getStatusBadge(statut) {
+            // Adapte les valeurs 'VALIDEE', 'EN_ATTENTE' selon ta BDD exacte
+            if (statut === 'VALIDE' || statut === 'VALIDEE') {
+                return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">En ligne</span>`;
+            } else if (statut === 'REFUSE' || statut === 'REFUSEE') {
+                return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Refusée</span>`;
+            } else {
+                return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">En attente</span>`;
+            }
+        }
+
+        function getBorderColor(statut) {
+             if (statut === 'VALIDE' || statut === 'VALIDEE') return 'border-green-500';
+             if (statut === 'REFUSE' || statut === 'REFUSEE') return 'border-red-500';
+             return 'border-yellow-500';
+        }
+
+        function showToast(message, type = 'success') {
+            const bgColor = type === 'success' ? 'bg-green-600' : 'bg-red-600';
+            const toast = document.createElement('div');
+            toast.className = `fixed top-24 right-4 ${bgColor} text-white px-6 py-4 rounded-lg shadow-lg flex items-center space-x-3 z-50 transition-opacity duration-300`;
+            toast.innerHTML = `
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${type === 'success' ? 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' : 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'}" />
+        </svg>
+        <span class="font-semibold">${message}</span>
+      `;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            if (confirm('Se déconnecter ?')) window.location.href = '/login';
+        });
+
+        // ==================== INIT ====================
+        // Décommenter quand le backend est prêt
+        loadStats();
+        loadOffres();
+    </script>
+</body>
+</html>
