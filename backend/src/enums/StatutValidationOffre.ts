@@ -1,6 +1,6 @@
 export enum StatutValidationOffre {
-    EN_ATTENTE = "EN_ATTENTE",
-    VALIDEE = "VALIDEE",
-    REFUSEE = "REFUSEE",
-    DESACTIVEE = "DESACTIVEE"
+  BROUILLON = "BROUILLON",
+  EN_ATTENTE = "EN_ATTENTE",
+  VALIDE = "VALIDE",
+  REFUSE = "REFUSE",
 }
