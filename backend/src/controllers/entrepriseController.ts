@@ -136,7 +136,20 @@ export const getCandidaturesRecues = async (req: Request, res: Response) => {
     `;
     const result = await query(sql, [entrepriseId]);
 
-    return res.status(200).json({ ok: true, candidatures: result.rows });
+    const offreId = req.query.offreId && !Array.isArray(req.query.offreId)
+    ? Number(req.query.offreId)
+    : null;
+
+    let rows = result.rows;
+
+    if (offreId && Number.isFinite(offreId)) {
+    rows = rows.filter((r: any) => {
+        const oid = Number(r.offre_id ?? r.id_offre ?? r.offreid ?? r.offreId);
+        return Number.isFinite(oid) ? oid === offreId : false;
+    });
+    }
+
+    return res.status(200).json({ ok: true, candidatures: rows });
   } catch (error) {
     console.error('getCandidaturesRecues error:', error);
     return res.status(500).json({ ok: false, error: 'Erreur candidatures' });

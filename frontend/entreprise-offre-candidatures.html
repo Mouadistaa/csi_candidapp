@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Candidatures - Offre | Candidapp</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              50: '#eef2ff', 100: '#e0e7ff', 200: '#c7d2fe', 300: '#a5b4fc',
+              400: '#818cf8', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca',
+              800: '#3730a3', 900: '#312e81',
+            },
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .gradient-bg { background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #a855f7 100%); }
+    .card-hover { transition: transform .2s ease, box-shadow .2s ease; }
+    .card-hover:hover { transform: translateY(-1px); box-shadow: 0 10px 25px rgba(0,0,0,.08); }
+  </style>
+</head>
+
+<body class="bg-gray-50 min-h-screen">
+
+<header class="bg-white shadow-sm sticky top-0 z-50">
+  <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex justify-between items-center h-16">
+      <a href="/dashboard/entreprise" class="flex items-center space-x-2">
+        <div class="w-10 h-10 gradient-bg rounded-lg flex items-center justify-center">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          </svg>
+        </div>
+        <div>
+          <span class="text-xl font-bold text-gray-900">Candidapp</span>
+          <span class="text-xs text-primary-600 block font-medium">Espace Recruteur</span>
+        </div>
+      </a>
+
+      <div class="flex items-center space-x-4">
+        <div id="userBadge" class="hidden md:flex items-center space-x-2 bg-primary-50 px-3 py-1.5 rounded-full">
+          <div class="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center">
+            <span id="userInitial" class="text-white font-semibold text-sm"></span>
+          </div>
+          <span id="userEmailBadge" class="text-primary-700 font-medium text-sm max-w-[160px] truncate"></span>
+        </div>
+
+        <button id="logoutBtn" class="flex items-center space-x-2 text-gray-600 hover:text-red-600 font-medium transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+          </svg>
+          <span class="hidden sm:inline">Déconnexion</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+</header>
+
+<section class="gradient-bg text-white py-10">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+      <div>
+        <h1 class="text-3xl font-bold mb-1">Gestion des candidatures</h1>
+        <p class="text-purple-200">Offre #<span id="offreIdText">-</span></p>
+      </div>
+      <a href="/dashboard/entreprise"
+         class="inline-flex items-center px-4 py-2 bg-white text-primary-700 font-semibold rounded-lg hover:bg-gray-50 transition">
+        ← Retour au dashboard
+      </a>
+    </div>
+  </div>
+</section>
+
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+  <div id="toastContainer" class="fixed top-24 right-4 z-50 space-y-2"></div>
+
+  <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div>
+        <h2 class="text-xl font-bold text-gray-900">Candidatures reçues</h2>
+        <p class="text-gray-600 text-sm">Vous pouvez retenir ou refuser un candidat (selon le statut).</p>
+      </div>
+      <button id="refreshBtn"
+              class="inline-flex items-center px-4 py-2 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 transition">
+        Rafraîchir
+      </button>
+    </div>
+  </div>
+
+  <div id="loadingState" class="bg-white rounded-xl shadow-sm p-8 text-center">
+    <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mb-4"></div>
+    <p class="text-gray-600">Chargement des candidatures...</p>
+  </div>
+
+  <div id="emptyState" class="hidden bg-white rounded-xl shadow-sm p-10 text-center">
+    <svg class="w-20 h-20 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+    </svg>
+    <h3 class="text-xl font-semibold text-gray-900 mb-2">Aucune candidature</h3>
+    <p class="text-gray-600">Cette offre n’a pas encore reçu de candidature.</p>
+  </div>
+
+  <div id="list" class="hidden space-y-4"></div>
+
+</main>
+
+<footer class="bg-gray-900 text-white py-6 mt-12">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-400 text-sm">
+    <p>&copy; 2026 Candidapp. Tous droits réservés.</p>
+  </div>
+</footer>
+
+<script>
+  // ==================== AUTH ====================
+  const user = JSON.parse(sessionStorage.getItem("user") || "null");
+  if (!user || !user.id || user.role !== 'ENTREPRISE') {
+    window.location.href = "/login";
+  }
+  const userId = user.id;
+
+  function initAuth() {
+    const initial = (user.email || '?').charAt(0).toUpperCase();
+    document.getElementById('userInitial').textContent = initial;
+    document.getElementById('userEmailBadge').textContent = user.email || '';
+    document.getElementById('userBadge').classList.remove('hidden');
+  }
+
+  // ==================== URL PARSING ====================
+  function getOffreIdFromPath() {
+    // /entreprise/offres/:id/candidatures
+    const parts = window.location.pathname.split('/').filter(Boolean);
+    const idx = parts.indexOf('offres');
+    if (idx === -1 || !parts[idx + 1]) return null;
+    const n = Number(parts[idx + 1]);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  const offreId = getOffreIdFromPath();
+  document.getElementById('offreIdText').textContent = offreId ?? '-';
+
+  if (!offreId) {
+    showToast("URL invalide (id offre manquant).", "error");
+  }
+
+  // ==================== API HELPERS ====================
+  function pick(obj, keys, fallback = null) {
+    for (const k of keys) {
+      if (obj && obj[k] !== undefined && obj[k] !== null) return obj[k];
+    }
+    return fallback;
+  }
+
+  function normalizeStatut(raw) {
+    if (!raw) return '';
+    return String(raw).trim().toUpperCase();
+  }
+
+  function statutBadge(statut) {
+    const s = normalizeStatut(statut);
+    if (s === 'EN_ATTENTE') return `<span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800">En attente</span>`;
+    if (s === 'RETENU') return `<span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800">Retenu</span>`;
+    if (s === 'REFUSE') return `<span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800">Refusé</span>`;
+    if (s === 'ANNULE') return `<span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-800">Annulé</span>`;
+    return `<span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-800">${s || 'Inconnu'}</span>`;
+  }
+
+  function formatDate(d) {
+    if (!d) return '—';
+    const date = new Date(d);
+    return isNaN(date.getTime()) ? '—' : date.toLocaleDateString('fr-FR');
+  }
+
+  // ==================== LOAD CANDIDATURES ====================
+  async function loadCandidatures() {
+    try {
+      document.getElementById('loadingState').classList.remove('hidden');
+      document.getElementById('emptyState').classList.add('hidden');
+      document.getElementById('list').classList.add('hidden');
+      document.getElementById('list').innerHTML = '';
+
+      // IMPORTANT: On utilise l'API déjà existante, et on filtre côté front si besoin.
+      // (Optionnel: on passe offreId en query; si ton back ne l'utilise pas, ça ne casse pas.)
+      const resp = await fetch(`/api/entreprise/candidatures?userId=${userId}&offreId=${offreId}`);
+      const data = await resp.json();
+
+      document.getElementById('loadingState').classList.add('hidden');
+
+      if (!data.ok) {
+        showToast(pick(data, ['error'], "Erreur lors du chargement."), "error");
+        return;
+      }
+
+      const all = data.candidatures || [];
+
+      // Filtre robuste sur plusieurs noms possibles de colonne
+      const filtered = all.filter(c => {
+        const oid = Number(pick(c, ['offre_id', 'id_offre', 'offreId', 'offre_id_cible', 'offre']));
+        return Number.isFinite(oid) ? oid === offreId : false;
+      });
+
+      if (filtered.length === 0) {
+        document.getElementById('emptyState').classList.remove('hidden');
+        return;
+      }
+
+      renderList(filtered);
+    } catch (e) {
+      console.error(e);
+      document.getElementById('loadingState').classList.add('hidden');
+      showToast("Erreur réseau / serveur.", "error");
+    }
+  }
+
+  function renderList(items) {
+    const list = document.getElementById('list');
+    list.classList.remove('hidden');
+    list.innerHTML = '';
+
+    items.forEach(c => {
+      const candidatureId = pick(c, ['candidature_id', 'id', 'candidatureId']);
+      const statut = normalizeStatut(pick(c, ['statut_candidature', 'statut', 'status'], ''));
+      const dateCand = pick(c, ['date_candidature', 'dateCandidature']);
+      const offreTitre = pick(c, ['offre_titre', 'titre_offre', 'titre'], null);
+
+      const nom = pick(c, ['etudiant_nom', 'nom_etudiant', 'nom'], '');
+      const prenom = pick(c, ['etudiant_prenom', 'prenom_etudiant', 'prenom'], '');
+      const email = pick(c, ['etudiant_email', 'email_etudiant', 'email'], '');
+      const formation = pick(c, ['etudiant_formation', 'formation'], null);
+      const cvUrl = pick(c, ['cv_url', 'cvUrl', 'etudiant_cv_url'], null);
+
+      const canDecide = (statut === 'EN_ATTENTE');
+
+      const card = document.createElement('div');
+      card.className = "bg-white rounded-xl shadow-sm p-6 card-hover border border-gray-100";
+
+      card.innerHTML = `
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div class="flex-1">
+            <div class="flex items-center gap-3 mb-2">
+              <h3 class="text-lg font-bold text-gray-900">${prenom} ${nom}</h3>
+              ${statutBadge(statut)}
+            </div>
+
+            <div class="text-sm text-gray-600 space-y-1">
+              ${offreTitre ? `<div><span class="font-semibold">Offre :</span> ${offreTitre}</div>` : ``}
+              <div><span class="font-semibold">Email :</span> ${email || '—'}</div>
+              ${formation ? `<div><span class="font-semibold">Formation :</span> ${formation}</div>` : ``}
+              <div><span class="font-semibold">Date candidature :</span> ${formatDate(dateCand)}</div>
+              ${cvUrl ? `<div><a class="text-primary-700 font-semibold hover:underline" href="${cvUrl}" target="_blank">Voir CV</a></div>` : ``}
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button ${canDecide ? '' : 'disabled'}
+              data-action="retenu" data-id="${candidatureId}"
+              class="px-4 py-2 rounded-lg font-semibold text-sm transition
+                     ${canDecide ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}">
+              Retenir
+            </button>
+            <button ${canDecide ? '' : 'disabled'}
+              data-action="refuse" data-id="${candidatureId}"
+              class="px-4 py-2 rounded-lg font-semibold text-sm transition
+                     ${canDecide ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}">
+              Refuser
+            </button>
+          </div>
+        </div>
+      `;
+
+      list.appendChild(card);
+    });
+
+    // bind actions
+    list.querySelectorAll('button[data-action]').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const b = e.currentTarget;
+        const action = b.getAttribute('data-action');
+        const id = b.getAttribute('data-id');
+
+        if (!id) return;
+
+        const decision = action === 'retenu' ? 'RETENU' : 'REFUSE';
+
+        // petite protection UX
+        b.disabled = true;
+
+        try {
+          const resp = await fetch(`/api/entreprise/candidature/decision?userId=${userId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ candidatureId: Number(id), decision })
+          });
+          const data = await resp.json();
+
+          if (!data.ok) {
+            showToast(pick(data, ['error'], "Action impossible."), "error");
+          } else {
+            showToast("Décision enregistrée.", "success");
+            await loadCandidatures(); // refresh
+          }
+        } catch (err) {
+          console.error(err);
+          showToast("Erreur serveur.", "error");
+        } finally {
+          b.disabled = false;
+        }
+      });
+    });
+  }
+
+  // ==================== TOAST ====================
+  function showToast(message, type = 'success') {
+    const container = document.getElementById('toastContainer');
+    const bg = type === 'success' ? 'bg-green-600' : 'bg-red-600';
+    const el = document.createElement('div');
+    el.className = `${bg} text-white px-4 py-3 rounded-lg shadow-lg text-sm font-semibold`;
+    el.textContent = message;
+    container.appendChild(el);
+    setTimeout(() => el.remove(), 2500);
+  }
+
+  // ==================== EVENTS ====================
+  document.getElementById('refreshBtn').addEventListener('click', loadCandidatures);
+  document.getElementById('logoutBtn').addEventListener('click', () => {
+    sessionStorage.removeItem('user');
+    window.location.href = '/login';
+  });
+
+  // ==================== INIT ====================
+  initAuth();
+  loadCandidatures();
+</script>
+
+</body>
+</html>

@@ -15,6 +15,7 @@ router.post('/attestations/:etudiantId/valider', secCtrl.validerAttestationRC);
 router.post('/attestations/:etudiantId/refuser', secCtrl.refuserAttestationRC);
 
 // ==================== GESTION DES ÉTUDIANTS ====================
+router.get('/etudiants', secCtrl.listerEtudiants);
 router.post('/etudiants', secCtrl.creerEtudiant);
 
 export default router;

@@ -148,60 +148,103 @@ export const refuserAttestationRC = async (req: Request, res: Response) => {
   }
 };
 
-/* =========================================================
-   CRÉATION ÉTUDIANT (ton code inchangé)
-   ========================================================= */
+// =========================================================
+// GESTION ÉTUDIANTS (100% VUES)
+// =========================================================
 
-// POST /api/dashboard/secretaire/etudiants
-export const creerEtudiant = async (req: Request, res: Response) => {
-  const { nom, prenom, email, password, formation, promo } = req.body;
-
-  if (!nom || !prenom || !email || !password || !formation) {
-    return res.status(400).json({ error: "Tous les champs sont obligatoires" });
-  }
-
-  const client = await getClient();
-
+// GET /api/dashboard/secretaire/etudiants?userId=...
+export const listerEtudiants = async (req: Request, res: Response) => {
   try {
-    await client.query('BEGIN');
+    const userId = getUserIdFromReq(req);
+    if (!userId) return res.status(400).json({ ok: false, error: "userId manquant" });
 
-    const checkEmail = await client.query('SELECT id FROM "Utilisateur" WHERE email = $1', [email]);
-    if (checkEmail.rows.length > 0) {
-      await client.query('ROLLBACK');
-      return res.status(409).json({ error: "Cet email est déjà utilisé" });
+    // sécurité: vérifier que c'est bien une secrétaire
+    const secretaireId = await getSecretaireIdFromUserId(userId);
+    if (!secretaireId) {
+      return res.status(403).json({ ok: false, error: "Accès interdit (profil secrétaire introuvable)" });
     }
 
-    const saltRounds = 10;
-    const passwordHash = await bcrypt.hash(password, saltRounds);
+    // ✅ uniquement une vue (pas de tables)
+    const result = await query(`
+      SELECT *
+      FROM v_profil_etudiant
+      ORDER BY etudiant_id DESC
+      LIMIT 200
+    `);
 
-    const userQuery = `
-      INSERT INTO "Utilisateur" (email, password_hash, role, actif, nom)
-      VALUES ($1, $2, 'ETUDIANT', true, $3)
-      RETURNING id
-    `;
-    const userRes = await client.query(userQuery, [email, passwordHash, nom]);
-    const newUserId = userRes.rows[0].id;
+    return res.status(200).json({ ok: true, etudiants: result.rows });
+  } catch (error: any) {
+    console.error("Erreur liste étudiants:", error);
+    return res.status(500).json({ ok: false, error: "Erreur lors de la récupération des étudiants" });
+  }
+};
 
-    const etudiantQuery = `
-      INSERT INTO "Etudiant" (utilisateur_id, nom, prenom, formation, promo, en_recherche)
-      VALUES ($1, $2, $3, $4, $5, true)
-      RETURNING etudiant_id
-    `;
-    await client.query(etudiantQuery, [newUserId, nom, prenom, formation, promo]);
 
-    await client.query('COMMIT');
+// POST /api/dashboard/secretaire/etudiants?userId=...
+export const creerEtudiant = async (req: Request, res: Response) => {
+  try {
+    const userId = getUserIdFromReq(req);
+    if (!userId) return res.status(400).json({ ok: false, error: "userId manquant" });
+
+    // sécurité côté Node (en plus de la BDD)
+    const secretaireId = await getSecretaireIdFromUserId(userId);
+    if (!secretaireId) {
+      return res.status(403).json({ ok: false, error: "Accès interdit (profil secrétaire introuvable)" });
+    }
+
+    const { nom, prenom, email, password, formation, promo } = req.body;
+
+    if (!nom || !prenom || !email || !password || !formation) {
+      return res.status(400).json({ ok: false, error: "Tous les champs obligatoires doivent être remplis" });
+    }
+
+    // validation email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(String(email))) {
+      return res.status(400).json({ ok: false, error: "Email invalide" });
+    }
+
+    if (String(password).length < 6) {
+      return res.status(400).json({ ok: false, error: "Mot de passe trop court (min 6 caractères)" });
+    }
+
+    // ✅ le trigger attend un bcrypt hash dans NEW.password_hash
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    // ✅ INSERT via vue action (pas de tables)
+    const r = await query(
+      `
+      INSERT INTO public.v_action_creer_etudiant
+        (secretaire_utilisateur_id, email, password_hash, nom, prenom, formation, promo)
+      VALUES
+        ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING *
+      `,
+      [userId, email, passwordHash, nom, prenom, formation, promo || null]
+    );
+
+    const row = r.rows[0];
 
     return res.status(201).json({
       ok: true,
       message: "Compte étudiant créé avec succès",
-      id: newUserId
+      utilisateurId: row?.utilisateur_id_created,
+      etudiantId: row?.etudiant_id_created
     });
 
-  } catch (error) {
-    await client.query('ROLLBACK');
-    console.error("Erreur création étudiant:", error);
-    return res.status(500).json({ error: "Erreur lors de la création de l'étudiant" });
-  } finally {
-    client.release();
+  } catch (error: any) {
+    console.error("Erreur création étudiant (via vue):", error);
+
+    const msg = String(error?.message || "");
+
+    // Trigger RAISE EXCEPTION => souvent code P0001
+    if (msg.includes("Accès interdit")) {
+      return res.status(403).json({ ok: false, error: msg });
+    }
+    if (msg.toLowerCase().includes("email déjà") || msg.toLowerCase().includes("email deja")) {
+      return res.status(409).json({ ok: false, error: msg });
+    }
+
+    return res.status(400).json({ ok: false, error: msg || "Erreur lors de la création de l'étudiant" });
   }
 };

@@ -73,6 +73,10 @@ app.get('/secretaire/dashboard', (_req, res) => {
     res.sendFile(path.join(__dirname, '..', '..', 'frontend', 'dashboard-secretaire.html'));
 });
 
+app.get('/secretaire/etudiants', (_req, res) => {
+  res.sendFile(path.join(__dirname, '..', '..', 'frontend', 'gestion-etudiants.html'));
+});
+
 app.get('/attestation-rc', (_req, res) => {
     res.sendFile(path.join(__dirname, '..', '..', 'frontend', 'attestation-rc.html'));
 });
@@ -92,6 +96,11 @@ app.get('/create-offre', (_req, res) => {
 });
 
 // ===================================================================
+
+// 3. Route pour gérer les candidatures d'une offre (page Entreprise)
+app.get('/entreprise/offres/:id/candidatures', (_req, res) => {
+  res.sendFile(path.join(__dirname, '..', '..', 'frontend', 'entreprise-offre-candidatures.html'));
+});
 
 // Serve frontend static files (CSS, JS, images, etc.)
 app.use(express.static(path.join(__dirname, '..', '..', 'frontend'), { index: false }));
