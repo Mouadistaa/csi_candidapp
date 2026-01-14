@@ -59,6 +59,18 @@
           <p class="text-gray-600">Connectez-vous à votre compte</p>
         </div>
 
+        <!-- Menu déroulant connexion rapide -->
+        <div class="mb-6">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Connexion rapide (dev)</label>
+          <select id="quickLogin" class="block w-full py-3 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition bg-gray-50">
+            <option value="">-- Sélectionner un utilisateur --</option>
+            <option value="etudiant@univ.fr|password123">Étudiant</option>
+            <option value="professeur@univ.fr|password123">Enseignant</option>
+            <option value="secretaire@univ.fr|password123">Secrétaire</option>
+            <option value="rh@innotech.com|Matrix123!">Entreprise</option>
+          </select>
+        </div>
+
         <div id="error" class="hidden bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg mb-6 text-sm">
         </div>
         <div id="success" class="hidden bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded-lg mb-6 text-sm">
@@ -122,6 +134,19 @@
   </main>
 
   <script>
+    // Connexion rapide - remplissage automatique des champs
+    document.getElementById('quickLogin').addEventListener('change', (e) => {
+      const value = e.target.value;
+      if (value) {
+        const [email, password] = value.split('|');
+        document.getElementById('email').value = email;
+        document.getElementById('password').value = password;
+      } else {
+        document.getElementById('email').value = '';
+        document.getElementById('password').value = '';
+      }
+    });
+
     // Afficher le message de succès si présent dans l'URL
     const urlParams = new URLSearchParams(window.location.search);
     const successMessage = urlParams.get('success');
