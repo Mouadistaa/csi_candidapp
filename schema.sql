@@ -128,8 +128,11 @@ create table "AttestationRC"
     statut          rc_statut_enum            not null,
     fichier_url     text                      not null,
     date_depot      date default CURRENT_DATE not null,
-    date_validation date
+    date_validation date,
+    date_expiration date not null default make_date(EXTRACT(YEAR FROM CURRENT_DATE)::int + 1, 1, 1)
 );
+
+comment on column "AttestationRC".date_expiration is 'Date d''expiration de l''attestation (1er janvier de l''année suivante)';
 
 alter table "AttestationRC"
     owner to m1user1_02;
@@ -764,16 +767,26 @@ FROM "Secretaire";
 alter table v_secretaire_by_user
     owner to m1user1_04;
 
-create view v_attestation_rc_etudiant (utilisateur_id, etudiant_id, statut, fichier_url, date_depot, date_validation) as
+create view v_attestation_rc_etudiant
+    (utilisateur_id, etudiant_id, statut, fichier_url, date_depot, date_validation, date_expiration, est_expiree, jours_restants)
+as
 SELECT u.id AS utilisateur_id,
        e.etudiant_id,
        a.statut,
        a.fichier_url,
        a.date_depot,
-       a.date_validation
+       a.date_validation,
+       a.date_expiration,
+       CASE WHEN a.date_expiration <= CURRENT_DATE THEN true ELSE false END AS est_expiree,
+       CASE
+           WHEN a.date_expiration IS NULL THEN NULL
+           ELSE GREATEST(0, a.date_expiration - CURRENT_DATE)
+       END AS jours_restants
 FROM "Utilisateur" u
          JOIN "Etudiant" e ON e.utilisateur_id = u.id
          LEFT JOIN "AttestationRC" a ON a.etudiant_id = e.etudiant_id;
+
+comment on view v_attestation_rc_etudiant is 'Vue attestation RC avec statut d''expiration';
 
 alter table v_attestation_rc_etudiant
     owner to m1user1_03;
@@ -1165,10 +1178,15 @@ as
 $$
 DECLARE
     v_statut_existant rc_statut_enum;
+    v_date_expiration_existante date;
+    v_nouvelle_date_expiration date;
 BEGIN
+    -- Calculer la date d'expiration : 1er janvier de l'année suivante
+    v_nouvelle_date_expiration := make_date(EXTRACT(YEAR FROM CURRENT_DATE)::int + 1, 1, 1);
+
     -- On regarde si une attestation existe déjà pour cet étudiant
-    SELECT statut
-    INTO v_statut_existant
+    SELECT statut, date_expiration
+    INTO v_statut_existant, v_date_expiration_existante
     FROM "AttestationRC"
     WHERE etudiant_id = NEW.etudiant_id;
 
@@ -1179,35 +1197,54 @@ BEGIN
             statut,
             fichier_url,
             date_depot,
-            date_validation
+            date_validation,
+            date_expiration
         ) VALUES (
-                     NEW.etudiant_id,
-                     'EN_ATTENTE',
-                     NEW.fichier_url,
-                     CURRENT_DATE,
-                     NULL
-                 );
+            NEW.etudiant_id,
+            'EN_ATTENTE',
+            NEW.fichier_url,
+            CURRENT_DATE,
+            NULL,
+            v_nouvelle_date_expiration
+        );
 
         RETURN NEW;
     END IF;
 
-    -- Cas B : attestation existante
+    -- Cas B : attestation REFUSE -> redépôt autorisé
     IF v_statut_existant = 'REFUSE' THEN
-        -- Redépôt autorisé : on remplace le fichier et on repasse en EN_ATTENTE
         UPDATE "AttestationRC"
         SET fichier_url     = NEW.fichier_url,
             statut          = 'EN_ATTENTE',
             date_depot      = CURRENT_DATE,
-            date_validation = NULL
+            date_validation = NULL,
+            date_expiration = v_nouvelle_date_expiration
         WHERE etudiant_id = NEW.etudiant_id;
 
         RETURN NEW;
     END IF;
 
-    -- Cas C : EN_ATTENTE ou VALIDE -> dépôt interdit
-    RAISE EXCEPTION
-        'Dépôt impossible : une attestation RC est déjà % (redépôt autorisé uniquement après REFUSE).',
-        v_statut_existant;
+    -- Cas C : attestation VALIDE mais EXPIREE -> redépôt autorisé
+    IF v_statut_existant = 'VALIDE' AND v_date_expiration_existante <= CURRENT_DATE THEN
+        UPDATE "AttestationRC"
+        SET fichier_url     = NEW.fichier_url,
+            statut          = 'EN_ATTENTE',
+            date_depot      = CURRENT_DATE,
+            date_validation = NULL,
+            date_expiration = v_nouvelle_date_expiration
+        WHERE etudiant_id = NEW.etudiant_id;
+
+        RETURN NEW;
+    END IF;
+
+    -- Cas D : VALIDE non expirée -> dépôt interdit
+    IF v_statut_existant = 'VALIDE' THEN
+        RAISE EXCEPTION 'Dépôt impossible : votre attestation RC est encore valide jusqu''au %.',
+            to_char(v_date_expiration_existante, 'DD/MM/YYYY');
+    END IF;
+
+    -- Cas E : EN_ATTENTE -> dépôt interdit
+    RAISE EXCEPTION 'Dépôt impossible : une attestation RC est déjà en attente de validation.';
 
 END;
 $$;

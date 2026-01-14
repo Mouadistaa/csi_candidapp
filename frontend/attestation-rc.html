@@ -4,6 +4,8 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <title>Déposer mon attestation RC - Candidapp</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -122,7 +124,7 @@
         </div>
 
         <!-- Statut -->
-        <div class="grid sm:grid-cols-2 gap-4 mb-8">
+        <div class="grid sm:grid-cols-3 gap-4 mb-8">
             <div class="bg-gray-50 rounded-xl p-4">
                 <p class="text-xs text-gray-500">Statut actuel</p>
                 <p id="statut" class="text-lg font-semibold text-gray-900">—</p>
@@ -131,6 +133,22 @@
             <div class="bg-gray-50 rounded-xl p-4">
                 <p class="text-xs text-gray-500">Dernier dépôt</p>
                 <p id="dateDepot" class="text-lg font-semibold text-gray-900">—</p>
+            </div>
+
+            <div id="expirationBox" class="bg-gray-50 rounded-xl p-4 hidden">
+                <p class="text-xs text-gray-500">Date d'expiration</p>
+                <p id="dateExpiration" class="text-lg font-semibold text-gray-900">—</p>
+                <p id="joursRestants" class="text-xs text-gray-500 mt-1"></p>
+            </div>
+        </div>
+
+        <!-- Alerte expiration -->
+        <div id="expirationWarning" class="hidden mb-6 px-4 py-3 rounded-lg text-sm border bg-orange-50 border-orange-200 text-orange-700">
+            <div class="flex items-center space-x-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span id="expirationWarningText"></span>
             </div>
         </div>
 
@@ -246,15 +264,55 @@
         }
 
         const att = data.attestation;
-        if (!att) {
+        // Vérifier si attestation existe ET a un statut (LEFT JOIN peut retourner un objet avec valeurs null)
+        if (!att || !att.statut) {
             document.getElementById('statut').textContent = 'AUCUNE';
             document.getElementById('dateDepot').textContent = '—';
             document.getElementById('existingFileBox').classList.add('hidden');
+            document.getElementById('expirationBox').classList.add('hidden');
+            document.getElementById('expirationWarning').classList.add('hidden');
+            updateUploadVisibility(null); // Permettre le dépôt
             return;
         }
 
         document.getElementById('statut').textContent = att.statut;
         document.getElementById('dateDepot').textContent = formatDate(att.date_depot);
+
+        // Afficher l'expiration si l'attestation est validée
+        if (att.statut === 'VALIDE' && att.date_expiration) {
+            const expirationBox = document.getElementById('expirationBox');
+            expirationBox.classList.remove('hidden');
+            document.getElementById('dateExpiration').textContent = formatDate(att.date_expiration);
+
+            const joursRestantsEl = document.getElementById('joursRestants');
+            const warningEl = document.getElementById('expirationWarning');
+            const warningTextEl = document.getElementById('expirationWarningText');
+
+            if (att.est_expiree) {
+                joursRestantsEl.textContent = 'Expirée';
+                joursRestantsEl.classList.add('text-red-600', 'font-semibold');
+                expirationBox.classList.remove('bg-gray-50');
+                expirationBox.classList.add('bg-red-50');
+                document.getElementById('dateExpiration').classList.add('text-red-600');
+                warningEl.classList.remove('hidden', 'bg-orange-50', 'border-orange-200', 'text-orange-700');
+                warningEl.classList.add('bg-red-50', 'border-red-200', 'text-red-700');
+                warningTextEl.textContent = 'Votre attestation RC a expiré. Veuillez en déposer une nouvelle.';
+            } else if (att.jours_restants !== null && att.jours_restants <= 30) {
+                joursRestantsEl.textContent = `${att.jours_restants} jour${att.jours_restants > 1 ? 's' : ''} restant${att.jours_restants > 1 ? 's' : ''}`;
+                joursRestantsEl.classList.add('text-orange-600', 'font-semibold');
+                expirationBox.classList.remove('bg-gray-50');
+                expirationBox.classList.add('bg-orange-50');
+                warningEl.classList.remove('hidden');
+                warningTextEl.textContent = `Attention : votre attestation RC expire dans ${att.jours_restants} jour${att.jours_restants > 1 ? 's' : ''}. Pensez à préparer votre renouvellement.`;
+            } else if (att.jours_restants !== null) {
+                joursRestantsEl.textContent = `${att.jours_restants} jours restants`;
+            } else {
+                joursRestantsEl.textContent = '';
+            }
+        } else {
+            document.getElementById('expirationBox').classList.add('hidden');
+            document.getElementById('expirationWarning').classList.add('hidden');
+        }
 
         if (att.fichier_url) {
             const box = document.getElementById('existingFileBox');
@@ -320,7 +378,7 @@
             showAlert('error', 'Erreur de connexion au serveur');
         } finally {
             btn.disabled = false;
-            btn.textContent = 'Déposer l’attestation';
+            btn.textContent = "Déposer l'attestation";
         }
     });
 
@@ -331,18 +389,25 @@
         if (!attestation) {
             // Aucune attestation → dépôt autorisé
             uploadSection.classList.remove('hidden');
-            submitBtn.textContent = 'Déposer l’attestation';
+            submitBtn.textContent = "Déposer l'attestation";
             return;
         }
 
         if (attestation.statut === 'REFUSE') {
-            // Redépôt autorisé
+            // Redépôt autorisé après refus
             uploadSection.classList.remove('hidden');
-            submitBtn.textContent = 'Redéposer l’attestation';
+            submitBtn.textContent = "Redéposer l'attestation";
             return;
         }
 
-        // EN_ATTENTE ou VALIDE → pas d'upload
+        if (attestation.statut === 'VALIDE' && attestation.est_expiree) {
+            // Redépôt autorisé car l'attestation a expiré
+            uploadSection.classList.remove('hidden');
+            submitBtn.textContent = "Renouveler l'attestation";
+            return;
+        }
+
+        // EN_ATTENTE ou VALIDE non expirée → pas d'upload
         uploadSection.classList.add('hidden');
     }
 

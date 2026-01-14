@@ -29,8 +29,9 @@ export async function getMyAttestationRCHandler(req: Request, res: Response) {
         }
 
         const result = await query<AttestationRC>(
-            `SELECT etudiant_id, statut, fichier_url, date_depot, date_validation
-             FROM v_attestation_rc_etudiant 
+            `SELECT etudiant_id, statut, fichier_url, date_depot, date_validation,
+                    date_expiration, est_expiree, jours_restants
+             FROM v_attestation_rc_etudiant
              WHERE utilisateur_id = $1`,
                 [userId]
         );

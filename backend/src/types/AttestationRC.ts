@@ -6,4 +6,7 @@ export interface AttestationRC {
     fichier_url: string;
     date_depot: Date;
     date_validation?: Date;
+    date_expiration?: Date;
+    est_expiree?: boolean;
+    jours_restants?: number;
 }
