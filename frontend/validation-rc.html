@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Validation RC - Candidapp</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              50: '#eef2ff', 100: '#e0e7ff', 200: '#c7d2fe', 300: '#a5b4fc',
+              400: '#818cf8', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca',
+              800: '#3730a3', 900: '#312e81',
+            },
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .gradient-bg { background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #a855f7 100%); }
+    .sidebar { width: 280px; min-height: 100vh; }
+    .menu-item { transition: all 0.2s ease; }
+    .menu-item:hover { background-color: rgba(99, 102, 241, 0.1); transform: translateX(4px); }
+    .menu-item.active { background-color: rgba(99, 102, 241, 0.15); border-left: 4px solid #4f46e5; font-weight: 600; }
+  </style>
+</head>
+
+<body class="bg-gray-50">
+<div class="flex">
+
+  <!-- Sidebar -->
+  <aside class="sidebar bg-white shadow-lg fixed left-0 top-0 flex flex-col">
+    <div class="p-6 border-b">
+      <div class="flex items-center space-x-3">
+        <div class="w-12 h-12 gradient-bg rounded-xl flex items-center justify-center">
+          <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold text-gray-900">Candidapp</h1>
+          <p class="text-xs text-gray-500">Secrétariat</p>
+        </div>
+      </div>
+    </div>
+
+    <nav class="flex-1 py-6">
+      <div class="px-4 space-y-2">
+        <a id="nav-dashboard" href="/secretaire/dashboard"
+           class="menu-item flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700">
+          <span>Tableau de bord</span>
+        </a>
+
+        <a id="nav-etudiants" href="/secretaire/etudiants"
+           class="menu-item flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700">
+          <span>Gestion étudiants</span>
+        </a>
+
+        <a id="nav-rc" href="/secretaire/validation-rc"
+           class="menu-item flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700">
+          <span>Validation RC</span>
+          <span id="menuBadgeRC" class="ml-auto bg-red-500 text-white text-xs px-2 py-1 rounded-full hidden"></span>
+        </a>
+      </div>
+    </nav>
+
+    <div class="p-4 border-t">
+      <button id="logoutBtn"
+        class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition">
+        <span>Déconnexion</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="flex-1 ml-[280px]">
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-10">
+      <div class="px-8 py-4 flex items-center justify-between">
+        <div>
+          <h2 class="text-2xl font-bold text-gray-900">Validation RC</h2>
+          <p class="text-sm text-gray-500 mt-1">Valider ou refuser les attestations déposées par les étudiants</p>
+        </div>
+        <div class="flex items-center space-x-3">
+          <div class="px-3 py-2 bg-gray-100 rounded-lg text-sm text-gray-700">
+            Total en attente : <span id="rcCount" class="font-semibold">-</span>
+          </div>
+          <div class="w-10 h-10 bg-primary-600 rounded-full flex items-center justify-center">
+            <span class="text-white font-semibold">SC</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <div class="p-8 space-y-6">
+
+      <!-- Toolbar -->
+      <div class="bg-white rounded-xl shadow-sm p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <input id="searchInput" type="text" placeholder="Rechercher (nom, prénom, promo...)"
+                 class="w-full md:w-96 px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-200" />
+        </div>
+
+        <div class="text-sm text-gray-500">
+          Astuce : clique sur “Valider” pour accepter l’attestation, ou “Refuser” avec un motif.
+        </div>
+      </div>
+
+      <!-- Liste -->
+      <div class="bg-white rounded-xl shadow-sm">
+        <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+          <h3 class="text-lg font-semibold text-gray-900">Attestations RC en attente</h3>
+          <span id="rcStatusBadge" class="text-xs px-3 py-1 rounded-full bg-gray-100 text-gray-700">Chargement…</span>
+        </div>
+
+        <div class="divide-y divide-gray-200" id="rcList"></div>
+
+        <div id="rcLoading" class="px-6 py-6 text-sm text-gray-500">Chargement des attestations...</div>
+        <div id="rcEmpty" class="hidden px-6 py-6 text-sm text-gray-500">Aucune attestation RC en attente.</div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  // ==================== SESSION ====================
+  let user = null;
+  try { user = JSON.parse(sessionStorage.getItem("user") || "null"); } catch { user = null; }
+  if (!user || !user.id) window.location.href = "/login.html";
+  const userId = user.id;
+
+  // ==================== INIT ====================
+  window.addEventListener("DOMContentLoaded", () => {
+    setupEventListeners();
+    setActiveMenu();
+    loadAttestations();
+  });
+
+  function setupEventListeners() {
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      sessionStorage.clear();
+      window.location.href = "/login.html";
+    });
+
+    document.getElementById("searchInput").addEventListener("input", () => {
+      filterRows();
+    });
+  }
+
+  function setActiveMenu() {
+    ["nav-dashboard","nav-etudiants","nav-rc"].forEach(id => document.getElementById(id)?.classList.remove("active"));
+    document.getElementById("nav-rc")?.classList.add("active");
+  }
+
+  // ==================== RC : LISTE ====================
+  let currentAttestations = [];
+
+  async function loadAttestations() {
+    const loading = document.getElementById("rcLoading");
+    const empty = document.getElementById("rcEmpty");
+    const list = document.getElementById("rcList");
+    const badge = document.getElementById("menuBadgeRC");
+    const count = document.getElementById("rcCount");
+    const statusBadge = document.getElementById("rcStatusBadge");
+
+    loading.classList.remove("hidden");
+    empty.classList.add("hidden");
+    list.innerHTML = "";
+    statusBadge.textContent = "Chargement…";
+    statusBadge.className = "text-xs px-3 py-1 rounded-full bg-gray-100 text-gray-700";
+
+    try {
+      const res = await fetch(`/api/dashboard/secretaire/attestations?userId=${userId}`);
+      const data = await res.json();
+
+      loading.classList.add("hidden");
+
+      if (!data.ok) {
+        empty.textContent = "Erreur lors du chargement des attestations.";
+        empty.classList.remove("hidden");
+        statusBadge.textContent = "Erreur";
+        statusBadge.className = "text-xs px-3 py-1 rounded-full bg-red-100 text-red-700";
+        return;
+      }
+
+      currentAttestations = data.attestations || [];
+
+      // Badge + count (robuste)
+      const n = currentAttestations.length;
+      count.textContent = String(n);
+
+      if (n > 0) { badge.textContent = String(n); badge.classList.remove("hidden"); }
+      else { badge.classList.add("hidden"); }
+
+      if (n === 0) {
+        empty.classList.remove("hidden");
+        statusBadge.textContent = "Aucune en attente";
+        statusBadge.className = "text-xs px-3 py-1 rounded-full bg-green-100 text-green-700";
+        return;
+      }
+
+      statusBadge.textContent = "En attente";
+      statusBadge.className = "text-xs px-3 py-1 rounded-full bg-yellow-100 text-yellow-700";
+
+      currentAttestations.forEach(a => list.appendChild(renderAttestationRow(a)));
+
+      filterRows(); // applique filtre si l'utilisateur tape déjà
+
+    } catch (e) {
+      loading.classList.add("hidden");
+      empty.textContent = "Erreur technique lors du chargement.";
+      empty.classList.remove("hidden");
+      console.error(e);
+      statusBadge.textContent = "Erreur";
+      statusBadge.className = "text-xs px-3 py-1 rounded-full bg-red-100 text-red-700";
+    }
+  }
+
+  function renderAttestationRow(a) {
+    const etudiantId = a.etudiant_id;
+    const nom = `${a.prenom || ''} ${a.nom || ''}`.trim() || `Étudiant #${etudiantId}`;
+    const promo = a.promo ? `Promo ${a.promo}` : '';
+    const dateDepot = a.date_depot ? new Date(a.date_depot).toLocaleDateString('fr-FR') : '—';
+    const fichier = a.fichier_url ? shortFileName(a.fichier_url) : 'fichier indisponible';
+    const initials = getInitials(a.prenom, a.nom);
+
+    const row = document.createElement("div");
+    row.className = "px-6 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3 hover:bg-gray-50 transition";
+    row.dataset.search = `${nom} ${promo}`.toLowerCase();
+
+    row.innerHTML = `
+      <div class="flex items-center space-x-4 flex-1">
+        <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+          <span class="text-blue-600 font-semibold text-sm">${initials}</span>
+        </div>
+
+        <div class="flex-1">
+          <h4 class="text-sm font-medium text-gray-900">${escapeHtml(nom)}</h4>
+          <p class="text-xs text-gray-500">${escapeHtml(promo)} • Soumis le ${escapeHtml(dateDepot)}</p>
+          <p class="text-xs text-gray-500 mt-1">Fichier : <span class="text-gray-700">${escapeHtml(fichier)}</span></p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 justify-end">
+        <button data-action="valider" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm rounded-lg transition">
+          Valider
+        </button>
+        <button data-action="refuser" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg transition">
+          Refuser
+        </button>
+      </div>
+    `;
+
+    row.querySelector('[data-action="valider"]').addEventListener("click", () => onValider(etudiantId));
+    row.querySelector('[data-action="refuser"]').addEventListener("click", () => onRefuser(etudiantId));
+
+    return row;
+  }
+
+  function filterRows() {
+    const q = (document.getElementById("searchInput").value || "").trim().toLowerCase();
+    const rows = Array.from(document.getElementById("rcList").children);
+
+    rows.forEach(r => {
+      const ok = !q || (r.dataset.search || "").includes(q);
+      r.style.display = ok ? "" : "none";
+    });
+  }
+
+  // ==================== RC : ACTIONS ====================
+  async function onValider(etudiantId) {
+    if (!confirm("Valider cette attestation RC ?")) return;
+
+    try {
+      const res = await fetch(`/api/dashboard/secretaire/attestations/${etudiantId}/valider?userId=${userId}`, {
+        method: "POST"
+      });
+      const data = await res.json();
+
+      if (!data.ok) { alert(data.error || "Erreur validation"); return; }
+
+      await loadAttestations();
+    } catch (e) {
+      console.error(e);
+      alert("Erreur technique validation");
+    }
+  }
+
+  async function onRefuser(etudiantId) {
+    const motif = prompt("Motif de refus (optionnel) :", "");
+    if (motif === null) return;
+
+    try {
+      const res = await fetch(`/api/dashboard/secretaire/attestations/${etudiantId}/refuser?userId=${userId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ motif_refus: motif || null })
+      });
+      const data = await res.json();
+
+      if (!data.ok) { alert(data.error || "Erreur refus"); return; }
+
+      await loadAttestations();
+    } catch (e) {
+      console.error(e);
+      alert("Erreur technique refus");
+    }
+  }
+
+  // ==================== HELPERS ====================
+  function getInitials(prenom, nom) {
+    const p = (prenom || "").trim();
+    const n = (nom || "").trim();
+    return ((p[0] || '') + (n[0] || '')).toUpperCase() || "??";
+  }
+
+  function shortFileName(url) {
+    try {
+      if (typeof url === "string" && url.startsWith("data:")) return "attestation_rc.pdf";
+      const parts = String(url).split("/");
+      return parts[parts.length - 1] || "attestation_rc.pdf";
+    } catch {
+      return "attestation_rc.pdf";
+    }
+  }
+
+  function escapeHtml(str) {
+    return String(str ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+</script>
+</body>
+</html>

@@ -73,8 +73,12 @@ app.get('/secretaire/dashboard', (_req, res) => {
     res.sendFile(path.join(__dirname, '..', '..', 'frontend', 'dashboard-secretaire.html'));
 });
 
+app.get('/secretaire/validation-rc', (_req, res) => {
+    res.sendFile(path.join(__dirname, '..', '..', 'frontend', 'validation-rc.html'));
+});
+
 app.get('/secretaire/etudiants', (_req, res) => {
-  res.sendFile(path.join(__dirname, '..', '..', 'frontend', 'gestion-etudiants.html'));
+    res.sendFile(path.join(__dirname, '..', '..', 'frontend', 'gestion-etudiants.html'));
 });
 
 app.get('/attestation-rc', (_req, res) => {
