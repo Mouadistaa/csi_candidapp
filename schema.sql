@@ -26,6 +26,10 @@ create type journal_type_enum as enum ('CONNEXION', 'CREATION', 'MODIFICATION', 
 
 alter type journal_type_enum owner to m1user1_02;
 
+create type notification_type_enum as enum ('OFFRE_SOUMISE', 'OFFRE_VALIDEE', 'OFFRE_REFUSEE', 'CANDIDATURE_RECUE', 'CANDIDATURE_ACCEPTEE', 'CANDIDATURE_REJETEE', 'AFFECTATION_VALIDEE', 'RC_VALIDEE', 'RC_REFUSEE', 'SYSTEME');
+
+alter type notification_type_enum owner to m1user1_02;
+
 create table "Utilisateur"
 (
     id            serial
@@ -263,6 +267,42 @@ create table "JournalEvenement"
 
 alter table "JournalEvenement"
     owner to m1user1_02;
+
+create table "Notification"
+(
+    notification_id serial
+        primary key,
+    destinataire_id integer                                not null
+        references "Utilisateur"
+            on delete cascade,
+    type            notification_type_enum                 not null,
+    titre           varchar(100)                           not null,
+    message         text                                   not null,
+    lien            varchar(255),
+    entite_type     varchar(50),
+    entite_id       integer,
+    lu              boolean                  default false not null,
+    created_at      timestamp with time zone default now() not null
+);
+
+comment on table "Notification" is 'Notifications internes pour les utilisateurs';
+
+comment on column "Notification".entite_type is 'Type d''entité liée : offre, candidature, attestation';
+
+comment on column "Notification".entite_id is 'ID de l''entité liée pour navigation';
+
+alter table "Notification"
+    owner to m1user1_02;
+
+create index idx_notification_destinataire
+    on "Notification" (destinataire_id);
+
+create index idx_notification_non_lues
+    on "Notification" (destinataire_id, lu)
+    where (lu = false);
+
+create index idx_notification_created
+    on "Notification" (created_at desc);
 
 create view v_offres_visibles_etudiant
             (offre_id, entreprise_nom, entreprise_site, entreprise_ville, titre, type, description, competences,
@@ -551,6 +591,8 @@ ORDER BY "RegleLegale".pays, "RegleLegale".type_contrat;
 alter table v_referentiel_legal
     owner to m1user1_02;
 
+grant select on v_referentiel_legal to role_enseignant;
+
 create view v_archives_stages
             (affectation_id, etudiant_nom_complet, etudiant_promo, entreprise_nom, offre_titre, date_debut_stage,
              date_fin_stage, date_validation_finale)
@@ -736,6 +778,8 @@ FROM "Utilisateur" u
 alter table v_attestation_rc_etudiant
     owner to m1user1_03;
 
+grant select on v_attestation_rc_etudiant to role_etudiant;
+
 create view v_action_modifier_referentiel_legal
             (regle_id, pays, type_contrat, remuneration_min, unite, duree_min_mois, duree_max_mois, date_effet,
              date_fin) as
@@ -752,6 +796,78 @@ FROM "RegleLegale" r;
 
 alter table v_action_modifier_referentiel_legal
     owner to m1user1_03;
+
+grant delete, insert, select, update on v_action_modifier_referentiel_legal to role_enseignant;
+
+create view v_action_creer_etudiant
+            (secretaire_utilisateur_id, email, password_hash, nom, prenom, formation, promo, utilisateur_id_created,
+             etudiant_id_created)
+as
+SELECT NULL::integer AS secretaire_utilisateur_id,
+       NULL::text    AS email,
+       NULL::text    AS password_hash,
+       NULL::text    AS nom,
+       NULL::text    AS prenom,
+       NULL::text    AS formation,
+       NULL::text    AS promo,
+       NULL::integer AS utilisateur_id_created,
+       NULL::integer AS etudiant_id_created
+WHERE false;
+
+alter table v_action_creer_etudiant
+    owner to m1user1_04;
+
+create view v_action_update_profil_etudiant(utilisateur_id, en_recherche, cv_url) as
+SELECT e.utilisateur_id,
+       e.en_recherche,
+       e.cv_url
+FROM "Etudiant" e;
+
+alter table v_action_update_profil_etudiant
+    owner to m1user1_02;
+
+grant select, update on v_action_update_profil_etudiant to role_etudiant;
+
+create view v_mes_notifications
+            (notification_id, type, titre, message, lien, entite_type, entite_id, lu, created_at, destinataire_id) as
+SELECT n.notification_id,
+       n.type,
+       n.titre,
+       n.message,
+       n.lien,
+       n.entite_type,
+       n.entite_id,
+       n.lu,
+       n.created_at,
+       n.destinataire_id
+FROM "Notification" n
+ORDER BY n.created_at DESC;
+
+comment on view v_mes_notifications is 'Vue pour récupérer les notifications - filtrer par destinataire_id';
+
+alter table v_mes_notifications
+    owner to m1user1_02;
+
+create view v_notifications_count(destinataire_id, non_lues, total) as
+SELECT "Notification".destinataire_id,
+       count(*) FILTER (WHERE "Notification".lu = false) AS non_lues,
+       count(*)                                          AS total
+FROM "Notification"
+GROUP BY "Notification".destinataire_id;
+
+comment on view v_notifications_count is 'Compteur de notifications par utilisateur';
+
+alter table v_notifications_count
+    owner to m1user1_02;
+
+create view v_action_marquer_notification_lue(notification_id, destinataire_id, lu) as
+SELECT "Notification".notification_id,
+       "Notification".destinataire_id,
+       "Notification".lu
+FROM "Notification";
+
+alter table v_action_marquer_notification_lue
+    owner to m1user1_02;
 
 create function trg_action_postuler_func() returns trigger
     language plpgsql
@@ -1208,21 +1324,57 @@ create trigger trg_action_valider_attestation_rc_update
     for each row
 execute procedure trg_action_valider_attestation_rc_func();
 
--- =====================================================
--- VUE ACTION : Mise à jour profil étudiant (CV + recherche)
--- =====================================================
+create function trg_action_creer_etudiant_func() returns trigger
+    language plpgsql
+as
+$$
+DECLARE
+    v_user_id int;
+    v_etudiant_id int;
+BEGIN
+    -- 1) Vérifier que l'appelant est bien secrétaire
+    IF NOT EXISTS (
+        SELECT 1
+        FROM public.v_secretaire_by_user s
+        WHERE s.utilisateur_id = NEW.secretaire_utilisateur_id
+    ) THEN
+        RAISE EXCEPTION 'Accès interdit: utilisateur % n''est pas secrétaire', NEW.secretaire_utilisateur_id;
+    END IF;
 
-create view v_action_update_profil_etudiant
-            (utilisateur_id, en_recherche, cv_url) as
-SELECT e.utilisateur_id,
-       e.en_recherche,
-       e.cv_url
-FROM "Etudiant" e;
+    -- 2) Vérifier email unique
+    IF EXISTS (
+        SELECT 1
+        FROM "Utilisateur" u
+        WHERE u.email = NEW.email
+    ) THEN
+        RAISE EXCEPTION 'Email déjà utilisé: %', NEW.email;
+    END IF;
 
-alter table v_action_update_profil_etudiant
-    owner to m1user1_02;
+    -- 3) Insérer Utilisateur (password_hash fourni par Node, pas de mot de passe en clair)
+    INSERT INTO "Utilisateur"(email, password_hash, role, actif, nom)
+    VALUES (NEW.email, NEW.password_hash, 'ETUDIANT', true, NEW.nom)
+    RETURNING id INTO v_user_id;
 
-grant select, update on v_action_update_profil_etudiant to role_etudiant;
+    -- 4) Insérer Etudiant
+    INSERT INTO "Etudiant"(utilisateur_id, nom, prenom, formation, promo, en_recherche, profil_visible)
+    VALUES (v_user_id, NEW.nom, NEW.prenom, NEW.formation, NEW.promo, false, false)
+    RETURNING etudiant_id INTO v_etudiant_id;
+
+    -- 5) Retour "propre"
+    NEW.utilisateur_id_created := v_user_id;
+    NEW.etudiant_id_created := v_etudiant_id;
+
+    RETURN NEW;
+END;
+$$;
+
+alter function trg_action_creer_etudiant_func() owner to m1user1_04;
+
+create trigger trg_action_creer_etudiant
+    instead of insert
+    on v_action_creer_etudiant
+    for each row
+execute procedure trg_action_creer_etudiant_func();
 
 create function trg_action_update_profil_etudiant_func() returns trigger
     language plpgsql
@@ -1232,9 +1384,9 @@ BEGIN
     UPDATE "Etudiant"
     SET en_recherche = COALESCE(NEW.en_recherche, OLD.en_recherche),
         cv_url = CASE
-            WHEN NEW.cv_url IS DISTINCT FROM OLD.cv_url THEN NEW.cv_url
-            ELSE OLD.cv_url
-        END
+                     WHEN NEW.cv_url IS DISTINCT FROM OLD.cv_url THEN NEW.cv_url
+                     ELSE OLD.cv_url
+            END
     WHERE utilisateur_id = OLD.utilisateur_id;
 
     IF NOT FOUND THEN
@@ -1252,4 +1404,390 @@ create trigger trg_action_update_profil_etudiant_update
     on v_action_update_profil_etudiant
     for each row
 execute procedure trg_action_update_profil_etudiant_func();
+
+create function trg_marquer_notification_lue() returns trigger
+    language plpgsql
+as
+$$
+BEGIN
+    -- Sécurité : on ne peut marquer que ses propres notifications
+    UPDATE "Notification"
+    SET lu = TRUE
+    WHERE notification_id = NEW.notification_id
+      AND destinataire_id = NEW.destinataire_id;
+
+    RETURN NEW;
+END;
+$$;
+
+alter function trg_marquer_notification_lue() owner to m1user1_03;
+
+create trigger trg_action_marquer_lue
+    instead of update
+    on v_action_marquer_notification_lue
+    for each row
+execute procedure trg_marquer_notification_lue();
+
+create function trg_action_marquer_notification_lue_func() returns trigger
+    language plpgsql
+as
+$$
+BEGIN
+    UPDATE "Notification"
+    SET lu = NEW.lu
+    WHERE notification_id = OLD.notification_id
+      AND destinataire_id = OLD.destinataire_id;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Notification introuvable ou accès non autorisé (id=%, user=%)',
+            OLD.notification_id, OLD.destinataire_id;
+    END IF;
+
+    RETURN NEW;
+END;
+$$;
+
+alter function trg_action_marquer_notification_lue_func() owner to m1user1_03;
+
+create trigger trg_action_marquer_notification_lue_update
+    instead of update
+    on v_action_marquer_notification_lue
+    for each row
+execute procedure trg_action_marquer_notification_lue_func();
+
+create function creer_notification(p_destinataire_id integer, p_type notification_type_enum, p_titre text, p_message text, p_lien text DEFAULT NULL::text, p_entite_type text DEFAULT NULL::text, p_entite_id integer DEFAULT NULL::integer) returns integer
+    language plpgsql
+as
+$$
+DECLARE
+    v_notification_id integer;
+BEGIN
+    INSERT INTO "Notification" (destinataire_id, type, titre, message, lien, entite_type, entite_id)
+    VALUES (p_destinataire_id, p_type, p_titre, p_message, p_lien, p_entite_type, p_entite_id)
+    RETURNING notification_id INTO v_notification_id;
+
+    RETURN v_notification_id;
+END;
+$$;
+
+alter function creer_notification(integer, notification_type_enum, text, text, text, text, integer) owner to m1user1_03;
+
+create function fn_creer_notification(p_destinataire_id integer, p_type notification_type_t, p_titre character varying, p_message text, p_lien character varying DEFAULT NULL::character varying, p_entite_type character varying DEFAULT NULL::character varying, p_entite_id integer DEFAULT NULL::integer) returns integer
+    language plpgsql
+as
+$$
+DECLARE
+    v_notification_id INTEGER;
+BEGIN
+    INSERT INTO "Notification" (
+        destinataire_id, type, titre, message, lien, entite_type, entite_id
+    ) VALUES (
+                 p_destinataire_id, p_type, p_titre, p_message, p_lien, p_entite_type, p_entite_id
+             ) RETURNING notification_id INTO v_notification_id;
+
+    RETURN v_notification_id;
+END;
+$$;
+
+comment on function fn_creer_notification(integer, notification_type_t, varchar, text, varchar, varchar, integer) is 'Fonction utilitaire pour créer une notification';
+
+alter function fn_creer_notification(integer, notification_type_t, varchar, text, varchar, varchar, integer) owner to m1user1_03;
+
+create function trg_notify_offre_soumise() returns trigger
+    language plpgsql
+as
+$$
+DECLARE
+    v_enseignant_user_id INTEGER;
+    v_entreprise_nom VARCHAR(255);
+BEGIN
+    -- Récupérer le nom de l'entreprise
+    SELECT e.raison_sociale INTO v_entreprise_nom
+    FROM "Entreprise" e
+    WHERE e.entreprise_id = NEW.entreprise_id;
+
+    -- Notifier tous les enseignants
+    FOR v_enseignant_user_id IN
+        SELECT u.id FROM "Utilisateur" u WHERE u.role = 'ENSEIGNANT'
+        LOOP
+            PERFORM fn_creer_notification(
+                    v_enseignant_user_id,
+                    'OFFRE_SOUMISE'::notification_type_t,
+                    'Nouvelle offre à valider',
+                    format('L''entreprise %s a soumis l''offre "%s"',
+                           COALESCE(v_entreprise_nom, 'Inconnue'),
+                           COALESCE(NEW.titre, 'Sans titre')),
+                    format('/dashboard/enseignant?offre=%s', NEW.id),
+                    'offre',
+                    NEW.id
+                    );
+        END LOOP;
+
+    RETURN NEW;
+END;
+$$;
+
+alter function trg_notify_offre_soumise() owner to m1user1_03;
+
+create trigger trg_offre_soumise_notification
+    after insert
+    on "Offre"
+    for each row
+    when (new.statut_validation = 'EN_ATTENTE'::validation_statut_enum)
+execute procedure trg_notify_offre_soumise();
+
+create function trg_notify_offre_decision() returns trigger
+    language plpgsql
+as
+$$
+DECLARE
+    v_entreprise_user_id INTEGER;
+    v_type notification_type_t;
+    v_titre VARCHAR(100);
+    v_message TEXT;
+BEGIN
+    -- Ne déclencher que si le statut change réellement
+    IF OLD.statut_validation IS NOT DISTINCT FROM NEW.statut_validation THEN
+        RETURN NEW;
+    END IF;
+
+    -- Récupérer l'utilisateur de l'entreprise
+    SELECT e.utilisateur_id INTO v_entreprise_user_id
+    FROM "Entreprise" e
+    WHERE e.entreprise_id = NEW.entreprise_id;
+
+    -- Si pas d'utilisateur trouvé, sortir
+    IF v_entreprise_user_id IS NULL THEN
+        RETURN NEW;
+    END IF;
+
+    IF NEW.statut_validation = 'VALIDE' THEN
+        v_type := 'OFFRE_VALIDEE';
+        v_titre := 'Offre validée ✓';
+        v_message := format('Votre offre "%s" a été validée et est maintenant visible par les étudiants.',
+                            COALESCE(NEW.titre, 'Sans titre'));
+    ELSIF NEW.statut_validation = 'REFUSE' THEN
+        v_type := 'OFFRE_REFUSEE';
+        v_titre := 'Offre refusée';
+        v_message := format('Votre offre "%s" a été refusée. Consultez les détails pour connaître le motif.',
+                            COALESCE(NEW.titre, 'Sans titre'));
+    ELSE
+        -- Autre statut, pas de notification
+        RETURN NEW;
+    END IF;
+
+    PERFORM fn_creer_notification(
+            v_entreprise_user_id,
+            v_type,
+            v_titre,
+            v_message,
+            format('/dashboard/entreprise?offre=%s', NEW.id),
+            'offre',
+            NEW.id
+            );
+
+    RETURN NEW;
+END;
+$$;
+
+alter function trg_notify_offre_decision() owner to m1user1_03;
+
+create trigger trg_offre_decision_notification
+    after update
+        of statut_validation
+    on "Offre"
+    for each row
+execute procedure trg_notify_offre_decision();
+
+create function trg_notify_nouvelle_candidature() returns trigger
+    language plpgsql
+as
+$$
+DECLARE
+    v_entreprise_user_id INTEGER;
+    v_etudiant_nom VARCHAR(255);
+    v_offre_titre VARCHAR(255);
+BEGIN
+    -- Récupérer le nom de l'étudiant
+    SELECT CONCAT(e.prenom, ' ', e.nom) INTO v_etudiant_nom
+    FROM "Etudiant" e
+    WHERE e.etudiant_id = NEW.etudiant_id;
+
+    -- Récupérer le titre de l'offre et l'utilisateur de l'entreprise
+    SELECT o.titre, ent.utilisateur_id
+    INTO v_offre_titre, v_entreprise_user_id
+    FROM "Offre" o
+             JOIN "Entreprise" ent ON ent.entreprise_id = o.entreprise_id
+    WHERE o.id = NEW.offre_id;
+
+    -- Si pas d'utilisateur trouvé, sortir
+    IF v_entreprise_user_id IS NULL THEN
+        RETURN NEW;
+    END IF;
+
+    -- Notifier l'entreprise
+    PERFORM fn_creer_notification(
+            v_entreprise_user_id,
+            'CANDIDATURE_RECUE'::notification_type_t,
+            'Nouvelle candidature reçue',
+            format('%s a candidaté à votre offre "%s"',
+                   COALESCE(v_etudiant_nom, 'Un étudiant'),
+                   COALESCE(v_offre_titre, 'votre offre')),
+            format('/dashboard/entreprise?candidature=%s', NEW.id),
+            'candidature',
+            NEW.id
+            );
+
+    RETURN NEW;
+END;
+$$;
+
+alter function trg_notify_nouvelle_candidature() owner to m1user1_03;
+
+create trigger trg_candidature_notification
+    after insert
+    on "Candidature"
+    for each row
+execute procedure trg_notify_nouvelle_candidature();
+
+create function trg_notify_candidature_decision() returns trigger
+    language plpgsql
+as
+$$
+DECLARE
+    v_etudiant_user_id INTEGER;
+    v_offre_titre VARCHAR(255);
+    v_entreprise_nom VARCHAR(255);
+    v_type notification_type_t;
+    v_titre VARCHAR(100);
+    v_message TEXT;
+BEGIN
+    -- Ne déclencher que si le statut change réellement
+    IF OLD.statut IS NOT DISTINCT FROM NEW.statut THEN
+        RETURN NEW;
+    END IF;
+
+    -- Récupérer l'utilisateur de l'étudiant
+    SELECT e.utilisateur_id INTO v_etudiant_user_id
+    FROM "Etudiant" e
+    WHERE e.etudiant_id = NEW.etudiant_id;
+
+    -- Récupérer les infos de l'offre et de l'entreprise
+    SELECT o.titre, ent.raison_sociale
+    INTO v_offre_titre, v_entreprise_nom
+    FROM "Offre" o
+             JOIN "Entreprise" ent ON ent.entreprise_id = o.entreprise_id
+    WHERE o.id = NEW.offre_id;
+
+    -- Si pas d'utilisateur trouvé, sortir
+    IF v_etudiant_user_id IS NULL THEN
+        RETURN NEW;
+    END IF;
+
+    IF NEW.statut = 'RETENU' THEN
+        v_type := 'CANDIDATURE_ACCEPTEE';
+        v_titre := 'Candidature retenue';
+        v_message := format('%s a retenu votre candidature pour le poste "%s" !',
+                            COALESCE(v_entreprise_nom, 'Une entreprise'),
+                            COALESCE(v_offre_titre, 'l''offre'));
+    ELSIF NEW.statut = 'ENTRETIEN' THEN
+        v_type := 'CANDIDATURE_ACCEPTEE';
+        v_titre := 'Entretien programme';
+        v_message := format('%s souhaite vous rencontrer pour le poste "%s".',
+                            COALESCE(v_entreprise_nom, 'Une entreprise'),
+                            COALESCE(v_offre_titre, 'l''offre'));
+    ELSIF NEW.statut = 'REFUSE' THEN
+        v_type := 'CANDIDATURE_REJETEE';
+        v_titre := 'Candidature non retenue';
+        v_message := format('Votre candidature pour "%s" chez %s n''a pas été retenue.',
+                            COALESCE(v_offre_titre, 'l''offre'),
+                            COALESCE(v_entreprise_nom, 'l''entreprise'));
+    ELSE
+        -- Autre statut (ANNULE, EN_ATTENTE), pas de notification standard
+        RETURN NEW;
+    END IF;
+
+    PERFORM fn_creer_notification(
+            v_etudiant_user_id,
+            v_type,
+            v_titre,
+            v_message,
+            '/candidatures',
+            'candidature',
+            NEW.id
+            );
+
+    RETURN NEW;
+END;
+$$;
+
+alter function trg_notify_candidature_decision() owner to m1user1_03;
+
+create trigger trg_candidature_decision_notification
+    after update
+        of statut
+    on "Candidature"
+    for each row
+execute procedure trg_notify_candidature_decision();
+
+create function trg_notify_attestation_rc() returns trigger
+    language plpgsql
+as
+$$
+DECLARE
+    v_etudiant_user_id INTEGER;
+    v_type notification_type_t;
+    v_titre VARCHAR(100);
+    v_message TEXT;
+BEGIN
+    -- Ne déclencher que si le statut change réellement
+    IF OLD.statut IS NOT DISTINCT FROM NEW.statut THEN
+        RETURN NEW;
+    END IF;
+
+    -- Récupérer l'utilisateur de l'étudiant
+    SELECT e.utilisateur_id INTO v_etudiant_user_id
+    FROM "Etudiant" e
+    WHERE e.etudiant_id = NEW.etudiant_id;
+
+    -- Si pas d'utilisateur trouvé, sortir
+    IF v_etudiant_user_id IS NULL THEN
+        RETURN NEW;
+    END IF;
+
+    IF NEW.statut = 'VALIDE' THEN
+        v_type := 'RC_VALIDEE';
+        v_titre := 'Attestation RC validée ✓';
+        v_message := 'Votre attestation de responsabilité civile a été validée. Vous pouvez maintenant candidater aux offres.';
+    ELSIF NEW.statut = 'REFUSE' THEN
+        v_type := 'RC_REFUSEE';
+        v_titre := 'Attestation RC refusée';
+        v_message := 'Votre attestation de responsabilité civile a été refusée. Veuillez en déposer une nouvelle conforme.';
+    ELSE
+        -- Autre statut, pas de notification
+        RETURN NEW;
+    END IF;
+
+    PERFORM fn_creer_notification(
+            v_etudiant_user_id,
+            v_type,
+            v_titre,
+            v_message,
+            '/profile#attestation',
+            'attestation',
+            NEW.etudiant_id
+            );
+
+    RETURN NEW;
+END;
+$$;
+
+alter function trg_notify_attestation_rc() owner to m1user1_03;
+
+create trigger trg_attestation_rc_notification
+    after update
+        of statut
+    on "AttestationRC"
+    for each row
+execute procedure trg_notify_attestation_rc();
 

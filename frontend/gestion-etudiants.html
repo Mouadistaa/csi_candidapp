@@ -29,161 +29,204 @@
   </script>
   <style>
     .gradient-bg { background: linear-gradient(135deg,#4f46e5 0%,#7c3aed 50%,#a855f7 100%); }
-    .card-hover { transition: transform .3s ease, box-shadow .3s ease; }
-    .card-hover:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0,0,0,.1); }
+    .sidebar { width: 280px; min-height: 100vh; }
+    .stat-card { transition: transform .2s ease, box-shadow .2s ease; }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(0,0,0,.1); }
+    .menu-item { transition: all .2s ease; }
+    .menu-item:hover { background-color: rgba(99,102,241,.1); transform: translateX(4px); }
+    .menu-item.active { background-color: rgba(99,102,241,.15); border-left: 4px solid #4f46e5; font-weight: 600; }
   </style>
 </head>
 
-<body class="bg-gray-50 min-h-screen">
-
-  <!-- Header -->
-  <header class="bg-white shadow-sm sticky top-0 z-50">
-    <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex justify-between items-center h-16">
-        <!-- Logo -->
-        <a href="/secretaire/dashboard" class="flex items-center space-x-2">
-          <div class="w-10 h-10 gradient-bg rounded-lg flex items-center justify-center">
-            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<body class="bg-gray-50">
+  <div class="flex">
+    <!-- Sidebar -->
+    <aside class="sidebar bg-white shadow-lg fixed left-0 top-0 flex flex-col">
+      <div class="p-6 border-b">
+        <div class="flex items-center space-x-3">
+          <div class="w-12 h-12 gradient-bg rounded-xl flex items-center justify-center">
+            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
           </div>
-          <span class="text-xl font-bold text-gray-900">Candidapp</span>
-          <span class="hidden sm:inline-block text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded-full font-medium">Secrétariat</span>
-        </a>
-
-        <!-- Navigation Links -->
-        <div class="hidden md:flex items-center space-x-6">
-          <a id="nav-dashboard" href="/secretaire/dashboard" class="text-gray-600 hover:text-primary-600 transition">Tableau de bord</a>
-          <a id="nav-etudiants" href="/secretaire/etudiants" class="text-primary-600 font-semibold border-b-2 border-primary-600 pb-1">Gestion étudiants</a>
-          <a id="nav-rc" href="/secretaire/validation-rc" class="text-gray-600 hover:text-primary-600 transition flex items-center space-x-1">
-            <span>Validation RC</span>
-            <span id="menuBadgeRC" class="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full hidden"></span>
-          </a>
-          <a id="nav-profil" href="/secretaire/profil" class="text-gray-600 hover:text-primary-600 transition">Mon profil</a>
-        </div>
-
-        <!-- User Menu -->
-        <div class="flex items-center space-x-4">
-          <div id="userBadge" class="hidden md:flex items-center space-x-2 bg-primary-50 px-3 py-1.5 rounded-full">
-            <div class="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center">
-              <span id="userInitial" class="text-white font-semibold text-sm">SC</span>
-            </div>
-            <span id="userEmailBadge" class="text-primary-700 font-medium text-sm max-w-[120px] truncate"></span>
+          <div>
+            <h1 class="text-xl font-bold text-gray-900">Candidapp</h1>
+            <p class="text-xs text-gray-500">Secrétariat</p>
           </div>
-          <button id="logoutBtn" class="flex items-center space-x-2 text-gray-600 hover:text-red-600 font-medium transition">
+        </div>
+      </div>
+
+      <nav class="flex-1 py-6">
+        <div class="px-4 space-y-2">
+          <a id="nav-dashboard" href="/secretaire/dashboard" class="menu-item flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
             </svg>
-            <span class="hidden sm:inline">Déconnexion</span>
-          </button>
-        </div>
-      </div>
-    </nav>
-  </header>
+            <span>Tableau de bord</span>
+          </a>
 
-  <!-- Page Header -->
-  <section class="gradient-bg text-white py-12">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex items-center space-x-4">
-        <div class="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
-          <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <a id="nav-etudiants" href="/secretaire/etudiants" class="menu-item flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+            <span>Gestion étudiants</span>
+          </a>
+
+          <!-- ✅ lien fonctionnel -->
+          <a id="nav-rc" href="/secretaire/validation-rc" class="menu-item flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>Validation RC</span>
+            <span id="menuBadgeRC" class="ml-auto bg-red-500 text-white text-xs px-2 py-1 rounded-full hidden"></span>
+          </a>
+
+          <a id="nav-profil" href="/secretaire/profil"
+            class="menu-item flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4.5 20.25a7.5 7.5 0 0115 0" />
+            </svg>
+            <span>Mon profil</span>
+          </a>
+        </div>
+      </nav>
+
+      <div class="p-4 border-t">
+        <button id="logoutBtn"
+          class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
           </svg>
+          <span>Déconnexion</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="flex-1 ml-[280px]">
+      <header class="bg-white shadow-sm sticky top-0 z-10">
+        <div class="px-8 py-4 flex items-center justify-between">
+          <div>
+            <h2 class="text-2xl font-bold text-gray-900">Gestion des étudiants</h2>
+            <p class="text-sm text-gray-500 mt-1">Créer des comptes étudiants et consulter la liste.</p>
+          </div>
+          <div class="flex items-center space-x-4">
+            <!-- Notification Bell -->
+            <div id="notificationBell" class="relative">
+              <button onclick="toggleNotificationPanel()" class="relative p-2 text-gray-600 hover:text-primary-600 transition">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                </svg>
+                <span id="notifBadge" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">0</span>
+              </button>
+              <div id="notifPanel" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-2xl border border-gray-100 z-50">
+                <div class="p-4 border-b border-gray-100 flex justify-between items-center">
+                  <h3 class="font-semibold text-gray-900">Notifications</h3>
+                  <button onclick="markAllRead()" class="text-sm text-primary-600 hover:text-primary-700 font-medium">Tout marquer lu</button>
+                </div>
+                <div id="notifList" class="max-h-96 overflow-y-auto"></div>
+                <div class="p-3 border-t border-gray-100 text-center">
+                  <a href="#" class="text-sm text-primary-600 hover:text-primary-700 font-medium">Voir toutes les notifications</a>
+                </div>
+              </div>
+            </div>
+            <div class="w-10 h-10 bg-primary-600 rounded-full flex items-center justify-center">
+              <span class="text-white font-semibold" id="avatarInitials">SC</span>
+            </div>
+          </div>
         </div>
-        <div>
-          <h1 class="text-3xl font-bold">Gestion des étudiants</h1>
-          <p class="text-purple-200 mt-1">Créer des comptes étudiants et consulter la liste</p>
+      </header>
+
+      <div class="p-8 space-y-6">
+        <!-- Form -->
+        <div class="bg-white rounded-xl shadow-sm p-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">Créer un compte étudiant</h3>
+
+          <div id="formMsg" class="hidden mb-4 px-4 py-3 rounded-lg text-sm"></div>
+
+          <form id="createForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Nom *</label>
+              <input id="nom" class="w-full rounded-lg border border-gray-200 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-200" />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Prénom *</label>
+              <input id="prenom" class="w-full rounded-lg border border-gray-200 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-200" />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+              <input id="email" type="email" class="w-full rounded-lg border border-gray-200 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-200" />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Mot de passe *</label>
+              <input id="password" type="password" class="w-full rounded-lg border border-gray-200 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-200" />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Formation *</label>
+              <input id="formation" class="w-full rounded-lg border border-gray-200 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-200" />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Promo</label>
+              <input id="promo" placeholder="ex: 2026" class="w-full rounded-lg border border-gray-200 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-200" />
+            </div>
+
+            <div class="md:col-span-2 flex items-center justify-end gap-3 pt-2">
+              <button type="button" id="refreshBtn"
+                class="px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition">
+                Rafraîchir liste
+              </button>
+              <button type="submit"
+                class="px-5 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition">
+                Créer
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Table -->
+        <div class="bg-white rounded-xl shadow-sm">
+          <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-gray-900">Liste des étudiants</h3>
+            <p class="text-sm text-gray-500"><span id="count">0</span> étudiant(s)</p>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="min-w-full text-sm">
+              <thead class="text-gray-500">
+                <tr class="border-b">
+                  <th class="text-left px-6 py-3">ID</th>
+                  <th class="text-left px-6 py-3">Email</th>
+                  <th class="text-left px-6 py-3">Nom</th>
+                  <th class="text-left px-6 py-3">Prénom</th>
+                  <th class="text-left px-6 py-3">Formation</th>
+                  <th class="text-left px-6 py-3">Promo</th>
+                  <th class="text-left px-6 py-3">Recherche</th>
+                  <th class="text-left px-6 py-3">Visible</th>
+                </tr>
+              </thead>
+              <tbody id="tbody" class="text-gray-700"></tbody>
+            </table>
+
+            <div id="loading" class="px-6 py-6 text-sm text-gray-500">Chargement...</div>
+            <div id="empty" class="hidden px-6 py-6 text-sm text-gray-500">Aucun étudiant.</div>
+          </div>
         </div>
       </div>
-    </div>
-  </section>
-
-  <!-- Main Content -->
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <div class="space-y-6">
-      <!-- Form -->
-      <div class="bg-white rounded-xl shadow-sm p-6">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">Créer un compte étudiant</h3>
-
-        <div id="formMsg" class="hidden mb-4 px-4 py-3 rounded-lg text-sm"></div>
-
-        <form id="createForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Nom *</label>
-            <input id="nom" class="w-full rounded-lg border border-gray-200 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-200" />
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Prénom *</label>
-            <input id="prenom" class="w-full rounded-lg border border-gray-200 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-200" />
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
-            <input id="email" type="email" class="w-full rounded-lg border border-gray-200 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-200" />
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Mot de passe *</label>
-            <input id="password" type="password" class="w-full rounded-lg border border-gray-200 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-200" />
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Formation *</label>
-            <input id="formation" class="w-full rounded-lg border border-gray-200 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-200" />
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Promo</label>
-            <input id="promo" placeholder="ex: 2026" class="w-full rounded-lg border border-gray-200 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-200" />
-          </div>
-
-          <div class="md:col-span-2 flex items-center justify-end gap-3 pt-2">
-            <button type="button" id="refreshBtn"
-              class="px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 transition">
-              Rafraîchir liste
-            </button>
-            <button type="submit"
-              class="px-5 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition">
-              Créer
-            </button>
-          </div>
-        </form>
-      </div>
-
-      <!-- Table -->
-      <div class="bg-white rounded-xl shadow-sm">
-        <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-          <h3 class="text-lg font-semibold text-gray-900">Liste des étudiants</h3>
-          <p class="text-sm text-gray-500"><span id="count">0</span> étudiant(s)</p>
-        </div>
-
-        <div class="overflow-x-auto">
-          <table class="min-w-full text-sm">
-            <thead class="text-gray-500">
-              <tr class="border-b">
-                <th class="text-left px-6 py-3">ID</th>
-                <th class="text-left px-6 py-3">Email</th>
-                <th class="text-left px-6 py-3">Nom</th>
-                <th class="text-left px-6 py-3">Prénom</th>
-                <th class="text-left px-6 py-3">Formation</th>
-                <th class="text-left px-6 py-3">Promo</th>
-                <th class="text-left px-6 py-3">Recherche</th>
-                <th class="text-left px-6 py-3">Visible</th>
-              </tr>
-            </thead>
-            <tbody id="tbody" class="text-gray-700"></tbody>
-          </table>
-
-          <div id="loading" class="px-6 py-6 text-sm text-gray-500">Chargement...</div>
-          <div id="empty" class="hidden px-6 py-6 text-sm text-gray-500">Aucun étudiant.</div>
-        </div>
-      </div>
-    </div>
-  </main>
+    </main>
+  </div>
 
   <script>
     // ==================== SESSION ====================
@@ -191,18 +234,10 @@
     if (!user || !user.id) window.location.href = "/login.html";
     const userId = user.id;
 
-    // ==================== UI INIT ====================
-    function initUserUI() {
-      const email = user?.email || '';
-      const nom = user?.nom || '';
-      const initial = (nom[0] || email[0] || 'S').toUpperCase();
-
-      document.getElementById('userInitial').textContent = initial;
-      document.getElementById('userEmailBadge').textContent = email;
-    }
+    // UI init
+    document.getElementById("avatarInitials").textContent = getInitials(user?.prenom, user?.nom) || "SC";
 
     window.addEventListener("DOMContentLoaded", async () => {
-      initUserUI();
       setActiveMenu();
       setupEventListeners();
       await refreshBadgeRC();
@@ -210,22 +245,8 @@
     });
 
     function setActiveMenu() {
-      const navItems = ['nav-dashboard', 'nav-etudiants', 'nav-rc', 'nav-profil'];
-      const path = window.location.pathname;
-
-      navItems.forEach(id => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.classList.remove('text-primary-600', 'font-semibold', 'border-b-2', 'border-primary-600', 'pb-1');
-        el.classList.add('text-gray-600');
-      });
-
-      let activeId = 'nav-etudiants';
-      const activeEl = document.getElementById(activeId);
-      if (activeEl) {
-        activeEl.classList.remove('text-gray-600');
-        activeEl.classList.add('text-primary-600', 'font-semibold', 'border-b-2', 'border-primary-600', 'pb-1');
-      }
+      ["nav-dashboard","nav-etudiants","nav-rc","nav-profil"].forEach(id => document.getElementById(id)?.classList.remove("active"));
+      document.getElementById("nav-etudiants")?.classList.add("active");
     }
 
     function setupEventListeners() {
@@ -373,6 +394,11 @@
 
     function val(id) { return (document.getElementById(id).value || "").trim(); }
 
+    function getInitials(prenom, nom) {
+      const p = (prenom || "").trim();
+      const n = (nom || "").trim();
+      return ((p[0] || '') + (n[0] || '')).toUpperCase();
+    }
 
     function escapeHtml(str) {
       return String(str ?? "")
@@ -383,5 +409,6 @@
         .replace(/'/g, "&#039;");
     }
   </script>
+  <script src="/js/notifications.js"></script>
 </body>
 </html>
