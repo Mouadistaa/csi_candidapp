@@ -151,6 +151,55 @@
                             <p class="font-medium text-green-600">Actif</p>
                         </div>
                     </div>
+
+                    <!-- Statut de recherche -->
+                    <div id="rechercheSection" class="hidden flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                            </svg>
+                            <div>
+                                <p class="text-xs text-gray-500">Recherche d'emploi</p>
+                                <p id="rechercheStatus" class="font-medium text-gray-600">-</p>
+                            </div>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="rechercheToggle" class="sr-only peer">
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+                        </label>
+                    </div>
+
+                    <!-- CV -->
+                    <div id="cvSection" class="hidden p-3 bg-gray-50 rounded-lg">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center">
+                                <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                                <div>
+                                    <p class="text-xs text-gray-500">CV</p>
+                                    <p id="cvStatus" class="font-medium text-gray-600">Non déposé</p>
+                                </div>
+                            </div>
+                            <button id="viewCvBtn" class="hidden text-primary-600 hover:text-primary-700 text-sm font-medium">
+                                Voir
+                            </button>
+                        </div>
+                        <div class="flex gap-2">
+                            <label class="flex-1 cursor-pointer">
+                                <input type="file" id="cvInput" accept="application/pdf" class="hidden">
+                                <span class="block w-full text-center py-2 px-3 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg transition">
+                                    Déposer un CV
+                                </span>
+                            </label>
+                            <button id="deleteCvBtn" class="hidden py-2 px-3 bg-red-100 hover:bg-red-200 text-red-600 text-sm font-medium rounded-lg transition">
+                                Supprimer
+                            </button>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2">Format PDF, max 5MB</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -497,6 +546,184 @@
 
     // Appelle ça au chargement de la page profil
     loadRcBadge();
+
+    // ===== GESTION PROFIL ETUDIANT (recherche + CV) =====
+
+    let currentCvUrl = null;
+
+    async function loadEtudiantProfile() {
+        const user = JSON.parse(sessionStorage.getItem('user') || 'null');
+        if (!user || user.role !== 'ETUDIANT') return;
+
+        // Afficher les sections
+        document.getElementById('rechercheSection').classList.remove('hidden');
+        document.getElementById('cvSection').classList.remove('hidden');
+
+        try {
+            const res = await fetch('/api/etudiant/profile', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: user.id, role: user.role })
+            });
+
+            if (!res.ok) return;
+
+            const data = await res.json();
+            if (!data.ok) return;
+
+            const profile = data.profile;
+
+            // Statut recherche
+            const toggle = document.getElementById('rechercheToggle');
+            const statusText = document.getElementById('rechercheStatus');
+            toggle.checked = profile.en_recherche;
+            statusText.textContent = profile.en_recherche ? 'En recherche' : 'Pas en recherche';
+            statusText.className = profile.en_recherche
+                ? 'font-medium text-green-600'
+                : 'font-medium text-gray-600';
+
+            // CV
+            currentCvUrl = profile.cv_url;
+            updateCvUI();
+
+        } catch (err) {
+            console.error('Erreur chargement profil étudiant:', err);
+        }
+    }
+
+    function updateCvUI() {
+        const cvStatus = document.getElementById('cvStatus');
+        const viewBtn = document.getElementById('viewCvBtn');
+        const deleteBtn = document.getElementById('deleteCvBtn');
+
+        if (currentCvUrl) {
+            cvStatus.textContent = 'CV déposé';
+            cvStatus.className = 'font-medium text-green-600';
+            viewBtn.classList.remove('hidden');
+            deleteBtn.classList.remove('hidden');
+        } else {
+            cvStatus.textContent = 'Non déposé';
+            cvStatus.className = 'font-medium text-gray-600';
+            viewBtn.classList.add('hidden');
+            deleteBtn.classList.add('hidden');
+        }
+    }
+
+    // Toggle recherche
+    document.getElementById('rechercheToggle').addEventListener('change', async (e) => {
+        const user = JSON.parse(sessionStorage.getItem('user') || 'null');
+        if (!user) return;
+
+        const enRecherche = e.target.checked;
+        const statusText = document.getElementById('rechercheStatus');
+
+        try {
+            const res = await fetch('/api/etudiant/recherche', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: user.id, role: user.role, enRecherche })
+            });
+
+            if (res.ok) {
+                statusText.textContent = enRecherche ? 'En recherche' : 'Pas en recherche';
+                statusText.className = enRecherche
+                    ? 'font-medium text-green-600'
+                    : 'font-medium text-gray-600';
+            } else {
+                // Revert on error
+                e.target.checked = !enRecherche;
+            }
+        } catch (err) {
+            console.error('Erreur mise à jour recherche:', err);
+            e.target.checked = !enRecherche;
+        }
+    });
+
+    // Upload CV
+    document.getElementById('cvInput').addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        if (file.type !== 'application/pdf') {
+            alert('Le fichier doit être un PDF');
+            e.target.value = '';
+            return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+            alert('Le fichier ne doit pas dépasser 5MB');
+            e.target.value = '';
+            return;
+        }
+
+        const user = JSON.parse(sessionStorage.getItem('user') || 'null');
+        if (!user) return;
+
+        // Convert to base64
+        const reader = new FileReader();
+        reader.onload = async () => {
+            const cvBase64 = reader.result;
+
+            try {
+                const res = await fetch('/api/etudiant/cv', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: user.id, role: user.role, cvBase64 })
+                });
+
+                const data = await res.json();
+                if (res.ok && data.ok) {
+                    currentCvUrl = cvBase64;
+                    updateCvUI();
+                } else {
+                    alert(data.message || 'Erreur lors du dépôt du CV');
+                }
+            } catch (err) {
+                console.error('Erreur upload CV:', err);
+                alert('Erreur lors du dépôt du CV');
+            }
+
+            e.target.value = '';
+        };
+        reader.readAsDataURL(file);
+    });
+
+    // Voir CV
+    document.getElementById('viewCvBtn').addEventListener('click', () => {
+        if (currentCvUrl) {
+            const newWindow = window.open();
+            newWindow.document.write(`<iframe src="${currentCvUrl}" style="width:100%;height:100%;border:none;"></iframe>`);
+        }
+    });
+
+    // Supprimer CV
+    document.getElementById('deleteCvBtn').addEventListener('click', async () => {
+        if (!confirm('Voulez-vous vraiment supprimer votre CV ?')) return;
+
+        const user = JSON.parse(sessionStorage.getItem('user') || 'null');
+        if (!user) return;
+
+        try {
+            const res = await fetch('/api/etudiant/cv', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: user.id, role: user.role })
+            });
+
+            if (res.ok) {
+                currentCvUrl = null;
+                updateCvUI();
+            } else {
+                alert('Erreur lors de la suppression du CV');
+            }
+        } catch (err) {
+            console.error('Erreur suppression CV:', err);
+            alert('Erreur lors de la suppression du CV');
+        }
+    });
+
+    // Charger le profil étudiant
+    loadEtudiantProfile();
 </script>
 </body>
 

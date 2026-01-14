@@ -26,10 +26,6 @@ create type journal_type_enum as enum ('CONNEXION', 'CREATION', 'MODIFICATION', 
 
 alter type journal_type_enum owner to m1user1_02;
 
-create type notification_type_enum as enum ('OFFRE_SOUMISE', 'OFFRE_VALIDEE', 'OFFRE_REFUSEE', 'CANDIDATURE_RECUE', 'CANDIDATURE_ACCEPTEE', 'CANDIDATURE_REJETEE', 'AFFECTATION_VALIDEE', 'RC_VALIDEE', 'RC_REFUSEE', 'SYSTEME');
-
-alter type notification_type_enum owner to m1user1_03;
-
 create table "Utilisateur"
 (
     id            serial
@@ -267,26 +263,6 @@ create table "JournalEvenement"
 
 alter table "JournalEvenement"
     owner to m1user1_02;
-
-create table "Notification"
-(
-    notification_id serial
-        primary key,
-    destinataire_id integer                                not null
-        references "Utilisateur"
-            on delete cascade,
-    type            notification_type_enum                 not null,
-    titre           varchar(100)                           not null,
-    message         text                                   not null,
-    lien            varchar(255),
-    entite_type     varchar(50),
-    entite_id       integer,
-    lu              boolean                  default false not null,
-    created_at      timestamp with time zone default now() not null
-);
-
-alter table "Notification"
-    owner to m1user1_03;
 
 create view v_offres_visibles_etudiant
             (offre_id, entreprise_nom, entreprise_site, entreprise_ville, titre, type, description, competences,
@@ -575,8 +551,6 @@ ORDER BY "RegleLegale".pays, "RegleLegale".type_contrat;
 alter table v_referentiel_legal
     owner to m1user1_02;
 
-grant select on v_referentiel_legal to role_enseignant;
-
 create view v_archives_stages
             (affectation_id, etudiant_nom_complet, etudiant_promo, entreprise_nom, offre_titre, date_debut_stage,
              date_fin_stage, date_validation_finale)
@@ -762,8 +736,6 @@ FROM "Utilisateur" u
 alter table v_attestation_rc_etudiant
     owner to m1user1_03;
 
-grant select on v_attestation_rc_etudiant to role_etudiant;
-
 create view v_action_modifier_referentiel_legal
             (regle_id, pays, type_contrat, remuneration_min, unite, duree_min_mois, duree_max_mois, date_effet,
              date_fin) as
@@ -779,74 +751,6 @@ SELECT r.id AS regle_id,
 FROM "RegleLegale" r;
 
 alter table v_action_modifier_referentiel_legal
-    owner to m1user1_03;
-
-grant delete, insert, select, update on v_action_modifier_referentiel_legal to role_enseignant;
-
-create view v_action_creer_etudiant
-            (secretaire_utilisateur_id, email, password_hash, nom, prenom, formation, promo, utilisateur_id_created,
-             etudiant_id_created)
-as
-SELECT NULL::integer AS secretaire_utilisateur_id,
-       NULL::text    AS email,
-       NULL::text    AS password_hash,
-       NULL::text    AS nom,
-       NULL::text    AS prenom,
-       NULL::text    AS formation,
-       NULL::text    AS promo,
-       NULL::integer AS utilisateur_id_created,
-       NULL::integer AS etudiant_id_created
-WHERE false;
-
-alter table v_action_creer_etudiant
-    owner to m1user1_04;
-
-create view v_action_update_profil_etudiant(utilisateur_id, en_recherche, cv_url) as
-SELECT e.utilisateur_id,
-       e.en_recherche,
-       e.cv_url
-FROM "Etudiant" e;
-
-alter table v_action_update_profil_etudiant
-    owner to m1user1_02;
-
-grant select, update on v_action_update_profil_etudiant to role_etudiant;
-
-create view v_mes_notifications
-            (notification_id, type, titre, message, lien, entite_type, entite_id, lu, created_at, destinataire_id) as
-SELECT n.notification_id,
-       n.type,
-       n.titre,
-       n.message,
-       n.lien,
-       n.entite_type,
-       n.entite_id,
-       n.lu,
-       n.created_at,
-       n.destinataire_id
-FROM "Notification" n
-ORDER BY n.created_at DESC;
-
-alter table v_mes_notifications
-    owner to m1user1_03;
-
-create view v_notifications_count(destinataire_id, non_lues, total) as
-SELECT "Notification".destinataire_id,
-       count(*) FILTER (WHERE "Notification".lu = false) AS non_lues,
-       count(*)                                          AS total
-FROM "Notification"
-GROUP BY "Notification".destinataire_id;
-
-alter table v_notifications_count
-    owner to m1user1_03;
-
-create view v_action_marquer_notification_lue(notification_id, destinataire_id, lu) as
-SELECT "Notification".notification_id,
-       "Notification".destinataire_id,
-       "Notification".lu
-FROM "Notification";
-
-alter table v_action_marquer_notification_lue
     owner to m1user1_03;
 
 create function trg_action_postuler_func() returns trigger
@@ -1304,57 +1208,21 @@ create trigger trg_action_valider_attestation_rc_update
     for each row
 execute procedure trg_action_valider_attestation_rc_func();
 
-create function trg_action_creer_etudiant_func() returns trigger
-    language plpgsql
-as
-$$
-DECLARE
-    v_user_id int;
-    v_etudiant_id int;
-BEGIN
-    -- 1) Vérifier que l'appelant est bien secrétaire
-    IF NOT EXISTS (
-        SELECT 1
-        FROM public.v_secretaire_by_user s
-        WHERE s.utilisateur_id = NEW.secretaire_utilisateur_id
-    ) THEN
-        RAISE EXCEPTION 'Accès interdit: utilisateur % n''est pas secrétaire', NEW.secretaire_utilisateur_id;
-    END IF;
+-- =====================================================
+-- VUE ACTION : Mise à jour profil étudiant (CV + recherche)
+-- =====================================================
 
-    -- 2) Vérifier email unique
-    IF EXISTS (
-        SELECT 1
-        FROM "Utilisateur" u
-        WHERE u.email = NEW.email
-    ) THEN
-        RAISE EXCEPTION 'Email déjà utilisé: %', NEW.email;
-    END IF;
+create view v_action_update_profil_etudiant
+            (utilisateur_id, en_recherche, cv_url) as
+SELECT e.utilisateur_id,
+       e.en_recherche,
+       e.cv_url
+FROM "Etudiant" e;
 
-    -- 3) Insérer Utilisateur (password_hash fourni par Node, pas de mot de passe en clair)
-    INSERT INTO "Utilisateur"(email, password_hash, role, actif, nom)
-    VALUES (NEW.email, NEW.password_hash, 'ETUDIANT', true, NEW.nom)
-    RETURNING id INTO v_user_id;
+alter table v_action_update_profil_etudiant
+    owner to m1user1_02;
 
-    -- 4) Insérer Etudiant
-    INSERT INTO "Etudiant"(utilisateur_id, nom, prenom, formation, promo, en_recherche, profil_visible)
-    VALUES (v_user_id, NEW.nom, NEW.prenom, NEW.formation, NEW.promo, false, false)
-    RETURNING etudiant_id INTO v_etudiant_id;
-
-    -- 5) Retour "propre"
-    NEW.utilisateur_id_created := v_user_id;
-    NEW.etudiant_id_created := v_etudiant_id;
-
-    RETURN NEW;
-END;
-$$;
-
-alter function trg_action_creer_etudiant_func() owner to m1user1_04;
-
-create trigger trg_action_creer_etudiant
-    instead of insert
-    on v_action_creer_etudiant
-    for each row
-execute procedure trg_action_creer_etudiant_func();
+grant select, update on v_action_update_profil_etudiant to role_etudiant;
 
 create function trg_action_update_profil_etudiant_func() returns trigger
     language plpgsql
@@ -1364,9 +1232,9 @@ BEGIN
     UPDATE "Etudiant"
     SET en_recherche = COALESCE(NEW.en_recherche, OLD.en_recherche),
         cv_url = CASE
-                     WHEN NEW.cv_url IS DISTINCT FROM OLD.cv_url THEN NEW.cv_url
-                     ELSE OLD.cv_url
-            END
+            WHEN NEW.cv_url IS DISTINCT FROM OLD.cv_url THEN NEW.cv_url
+            ELSE OLD.cv_url
+        END
     WHERE utilisateur_id = OLD.utilisateur_id;
 
     IF NOT FOUND THEN
@@ -1384,27 +1252,4 @@ create trigger trg_action_update_profil_etudiant_update
     on v_action_update_profil_etudiant
     for each row
 execute procedure trg_action_update_profil_etudiant_func();
-
-create function trg_marquer_notification_lue() returns trigger
-    language plpgsql
-as
-$$
-BEGIN
-    -- Sécurité : on ne peut marquer que ses propres notifications
-    UPDATE "Notification"
-    SET lu = TRUE
-    WHERE notification_id = NEW.notification_id
-      AND destinataire_id = NEW.destinataire_id;
-
-    RETURN NEW;
-END;
-$$;
-
-alter function trg_marquer_notification_lue() owner to m1user1_03;
-
-create trigger trg_action_marquer_lue
-    instead of update
-    on v_action_marquer_notification_lue
-    for each row
-execute procedure trg_marquer_notification_lue();
 
