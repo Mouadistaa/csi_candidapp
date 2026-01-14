@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { query } from '../config/db';
 import { RegleLegale } from '../types/RegleLegale';
 import { DashboardEnseignantStats } from '../types/Dashboard';
+import {StatutValidationOffre} from "../enums/StatutValidationOffre";
 
 // ==================== RÉFÉRENTIEL LÉGAL (CRUD) ====================
 
@@ -193,7 +194,7 @@ export const getOffresConformite = async (_req: Request, res: Response) => {
                     WHEN statut_validation = 'EN_ATTENTE' THEN 1 
                     ELSE 2 
                 END,
-                date_creation DESC`
+                date_soumission DESC`
         );
 
         return res.status(200).json({
@@ -228,22 +229,15 @@ export const reviewOffre = async (req: Request, res: Response) => {
         });
     }
 
-    if (action === 'REFUSER' && !motif_refus) {
-        return res.status(400).json({
-            ok: false,
-            error: 'Le motif de refus est requis'
-        });
-    }
-
     try {
         // Utilisation de la vue d'action pour la review
-        const statut = action === 'VALIDER' ? 'VALIDEE' : 'REJETEE';
+        const statut = action === 'VALIDER' ? StatutValidationOffre.VALIDE : StatutValidationOffre.REFUSE;
 
         await query(
             `UPDATE v_action_enseignant_review_offre 
-             SET statut_validation = $1, motif_refus = $2, enseignant_id = $3
-             WHERE offre_id = $4`,
-            [statut, motif_refus || null, 1, id] // enseignant_id hardcodé à 1 pour le prototype
+             SET statut_validation = $1
+             WHERE offre_id = $2`,
+            [statut, id] // enseignant_id hardcodé à 1 pour le prototype
         );
 
         return res.status(200).json({

@@ -32,7 +32,7 @@ export async function getMyAttestationRCHandler(req: Request, res: Response) {
             `SELECT etudiant_id, statut, fichier_url, date_depot, date_validation
              FROM v_attestation_rc_etudiant 
              WHERE utilisateur_id = $1`,
-                [etudiantId]
+                [userId]
         );
 
         return res.status(200).json({

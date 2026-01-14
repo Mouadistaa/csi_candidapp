@@ -2,12 +2,21 @@ import { Request, Response } from 'express';
 import { query } from '../config/db';
 import { MesCandidatures } from '../types/Candidature';
 
+async function getEtudiantIdFromUserId(userId: number): Promise<number | null> {
+    const r = await query(
+        'SELECT etudiant_id FROM v_profil_etudiant WHERE utilisateur_id = $1 LIMIT 1',
+        [userId]
+    );
+    return r.rows[0]?.etudiant_id ?? null;
+}
+
 /**
  * Postuler à une offre
  * @route POST /api/candidatures
  */
 export async function postulerHandler(req: Request, res: Response) {
     const { offre_id, userId } = req.body;
+    const etudiantId = await getEtudiantIdFromUserId(Number(userId));
 
     if (!offre_id) {
         return res.status(400).json({ ok: false, error: 'offre_id est requis' });
@@ -21,7 +30,7 @@ export async function postulerHandler(req: Request, res: Response) {
         // ⚠️ Note : ici tu utilises userId comme etudiant_id (comme dans ton server.ts actuel)
         await query(
             'INSERT INTO v_action_postuler (offre_id, etudiant_id, source) VALUES ($1, $2, $3)',
-            [offre_id, userId, 'Plateforme Web']
+            [offre_id, etudiantId, 'Plateforme Web']
         );
 
         return res.status(200).json({ ok: true, message: 'Candidature envoyée avec succès' });
@@ -77,6 +86,7 @@ export async function getMesCandidaturesHandler(req: Request, res: Response) {
 export async function annulerCandidatureHandler(req: Request, res: Response) {
     const candidatureId = Number(req.params.id);
     const userId = Number(req.body.userId);
+    const etudiantId = await getEtudiantIdFromUserId(Number(userId));
 
     if (!candidatureId || !userId) {
         return res.status(400).json({ ok: false });
@@ -86,7 +96,7 @@ export async function annulerCandidatureHandler(req: Request, res: Response) {
         `UPDATE v_action_annuler_candidature
      SET statut = 'ANNULE'
      WHERE candidature_id = $1 AND etudiant_id = $2`,
-        [candidatureId, userId]
+        [candidatureId, etudiantId]
     );
 
     res.json({ ok: true });
