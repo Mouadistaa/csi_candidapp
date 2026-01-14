@@ -80,7 +80,7 @@
     <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-16">
             <!-- Logo -->
-            <a href="/" class="flex items-center space-x-2">
+            <a id="logoLink" href="/" class="flex items-center space-x-2">
                 <div class="w-10 h-10 gradient-bg rounded-lg flex items-center justify-center">
                     <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -88,14 +88,12 @@
                     </svg>
                 </div>
                 <span class="text-xl font-bold text-gray-900">Candidapp</span>
+                <span id="roleLabel" class="hidden sm:inline-block text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded-full font-medium"></span>
             </a>
 
-            <!-- Navigation Links -->
-            <div class="hidden md:flex items-center space-x-6">
-                <a href="/" class="text-gray-600 hover:text-primary-600 transition">Accueil</a>
-                <a href="/profile" class="text-gray-600 hover:text-primary-600 transition">Mon profil</a>
-                <a href="/offres" class="text-primary-600 font-semibold border-b-2 border-primary-600 pb-1">Offres</a>
-                <a href="/candidatures" class="text-gray-600 hover:text-primary-600 transition">Mes candidatures</a>
+            <!-- Navigation Links - Dynamique selon le rôle -->
+            <div id="navLinks" class="hidden md:flex items-center space-x-6">
+                <!-- Les liens sont générés dynamiquement via JavaScript -->
             </div>
 
             <!-- User Menu -->
@@ -219,6 +217,81 @@
     </footer>
 
     <script>
+        // Configuration de navigation par rôle
+        const navConfig = {
+            etudiant: {
+                label: 'Étudiant',
+                logoHref: '/',
+                links: [
+                    { href: '/', text: 'Accueil', active: false },
+                    { href: '/profile', text: 'Mon profil', active: false },
+                    { href: '/offres', text: 'Offres', active: true },
+                    { href: '/candidatures', text: 'Mes candidatures', active: false }
+                ]
+            },
+            secretaire: {
+                label: 'Secrétariat',
+                logoHref: '/secretaire/dashboard',
+                links: [
+                    { href: '/secretaire/dashboard', text: 'Tableau de bord', active: false },
+                    { href: '/secretaire/etudiants', text: 'Gestion étudiants', active: false },
+                    { href: '/secretaire/validation-rc', text: 'Validation RC', active: false },
+                    { href: '/offres', text: 'Offres', active: true },
+                    { href: '/secretaire/profil', text: 'Mon profil', active: false }
+                ]
+            },
+            enseignant: {
+                label: 'Enseignant',
+                logoHref: '/enseignant/dashboard',
+                links: [
+                    { href: '/enseignant/dashboard', text: 'Dashboard', active: false },
+                    { href: '/enseignant/referentiel', text: 'Référentiel Légal', active: false },
+                    { href: '/offres', text: 'Offres', active: true },
+                    { href: '/enseignant/archives', text: 'Archives', active: false }
+                ]
+            },
+            entreprise: {
+                label: 'Recruteur',
+                logoHref: '/dashboard/entreprise',
+                links: [
+                    { href: '/dashboard/entreprise', text: 'Dashboard', active: false },
+                    { href: '/create-offre', text: 'Publier une offre', active: false },
+                    { href: '/offres', text: 'Offres', active: true }
+                ]
+            }
+        };
+
+        // Fonction pour initialiser la navigation selon le rôle
+        function initNavigation() {
+            const user = JSON.parse(sessionStorage.getItem('user') || 'null');
+            const role = user?.role?.toLowerCase() || 'etudiant';
+            const config = navConfig[role] || navConfig.etudiant;
+
+            // Mettre à jour le label du rôle
+            const roleLabel = document.getElementById('roleLabel');
+            if (roleLabel && config.label) {
+                roleLabel.textContent = config.label;
+                roleLabel.classList.remove('hidden');
+            }
+
+            // Mettre à jour le lien du logo
+            const logoLink = document.getElementById('logoLink');
+            if (logoLink) {
+                logoLink.href = config.logoHref;
+            }
+
+            // Générer les liens de navigation
+            const navLinks = document.getElementById('navLinks');
+            if (navLinks) {
+                navLinks.innerHTML = config.links.map(link => {
+                    const activeClass = link.active
+                        ? 'text-primary-600 font-semibold border-b-2 border-primary-600 pb-1'
+                        : 'text-gray-600 hover:text-primary-600 transition';
+                    return `<a href="${link.href}" class="${activeClass}">${link.text}</a>`;
+                }).join('');
+            }
+        }
+
         // Gestion de l'authentification
         function initAuth() {
             const user = JSON.parse(sessionStorage.getItem('user') || 'null');
@@ -228,6 +301,7 @@
                 document.getElementById('userEmailBadge').textContent = user.email;
                 document.getElementById('userBadge').classList.remove('hidden');
             }
+            initNavigation();
         }
 
         document.getElementById('logoutBtn').addEventListener('click', () => {
