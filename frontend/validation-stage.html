@@ -104,10 +104,11 @@
                 <!-- Navigation -->
                 <div class="hidden md:flex items-center space-x-6">
                     <a href="/enseignant/dashboard"
-                        class="text-primary-600 font-semibold border-b-2 border-primary-600 pb-1">Dashboard</a>
+                        class="text-gray-600 hover:text-primary-600 transition">Dashboard</a>
+                    <a href="/enseignant/affectations-en-attente"
+                        class="text-primary-600 font-semibold border-b-2 border-primary-600 pb-1">Affectations</a>
                     <a href="/enseignant/referentiel"
-                        class="text-gray-600 hover:text-primary-600 transition">Référentiel
-                        Légal</a>
+                        class="text-gray-600 hover:text-primary-600 transition">Référentiel Légal</a>
                     <a href="/offres" class="text-gray-600 hover:text-primary-600 transition">Offres</a>
                     <a href="/enseignant/archives" class="text-gray-600 hover:text-primary-600 transition">Archives</a>
                 </div>
@@ -122,6 +123,15 @@
                         <span id="userEmailBadge"
                             class="text-primary-700 font-medium text-sm max-w-[120px] truncate"></span>
                     </div>
+                    <button id="btnModeSecretaire"
+                        class="hidden items-center space-x-1.5 px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-sm rounded-lg font-medium transition"
+                        title="Vous remplacez une secrétaire en congé">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span>Mode secrétariat</span>
+                    </button>
                     <button id="logoutBtn"
                         class="flex items-center space-x-2 text-gray-600 hover:text-red-600 font-medium transition">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -316,8 +326,7 @@
         }
 
         document.getElementById('logoutBtn').addEventListener('click', () => {
-            sessionStorage.removeItem('user');
-            window.location.href = '/login';
+            Auth.logout('Vous avez été déconnecté.');
         });
 
         // ===== GESTION DES ÉTATS D'AFFICHAGE =====
@@ -495,13 +504,37 @@
             }
         }
 
+        // ===== CHECK DELEGATION SECRETAIRE =====
+        async function checkDelegationSecretaire() {
+            const user = JSON.parse(sessionStorage.getItem('user') || 'null');
+            if (!user?.id) return;
+
+            try {
+                const r = await fetch(`/api/enseignant/delegation/secretaire?userId=${user.id}`);
+                const data = await r.json();
+
+                const btn = document.getElementById('btnModeSecretaire');
+                if (data.ok && data.active) {
+                    btn.classList.remove('hidden');
+                    btn.classList.add('flex');
+                    btn.addEventListener('click', () => {
+                        window.location.href = '/secretaire/dashboard';
+                    });
+                }
+            } catch (e) {
+                console.error('Erreur vérification délégation:', e);
+            }
+        }
+
         // ===== INITIALISATION =====
 
         document.addEventListener('DOMContentLoaded', () => {
             initAuth();
             loadPendingCandidatures();
+            checkDelegationSecretaire();
         });
     </script>
+    <script src="/js/auth.js"></script>
 </body>
 
 </html>

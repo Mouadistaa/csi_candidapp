@@ -136,7 +136,13 @@
     </div>
   </main>
 
+  <script src="/js/auth.js"></script>
   <script>
+    // Vérifier immédiatement si déjà connecté (sauf si paramètre logout/success)
+    if (!new URLSearchParams(window.location.search).has('success')) {
+        Auth.redirectIfLoggedIn();
+    }
+
     // Connexion rapide - remplissage automatique des champs
     document.getElementById('quickLogin').addEventListener('change', (e) => {
       const value = e.target.value;
@@ -202,32 +208,12 @@
           return;
         }
 
-        // Stocker dans localStorage ET sessionStorage pour compatibilité
-        localStorage.setItem('user', JSON.stringify(data.user));
-        localStorage.setItem('token', data.token || 'session');
-        sessionStorage.setItem('user', JSON.stringify(data.user));
+        // Utiliser Auth.saveLogin pour stocker proprement
+        Auth.saveLogin(data.user, data.token);
 
-        // Redirection conditionnelle selon le rôle
-        let redirectUrl = '/profile';
-        switch (data.user.role) {
-          case 'ADMIN':
-            redirectUrl = '/admin/dashboard';
-            break;
-          case 'ENSEIGNANT':
-            redirectUrl = '/enseignant/dashboard';
-            break;
-          case 'SECRETAIRE':
-            redirectUrl = '/secretaire/dashboard';
-            break;
-          case 'ENTREPRISE':
-            redirectUrl = '/dashboard/entreprise';
-            break;
-          case 'ETUDIANT':
-          default:
-            redirectUrl = '/profile';
-            break;
-        }
-        window.location.href = data.redirectUrl || redirectUrl;
+        // Redirection vers le dashboard approprié
+        const redirectUrl = data.redirectUrl || Auth.getDashboardUrl(data.user.role);
+        window.location.href = redirectUrl;
       } catch (err) {
         errorEl.textContent = 'Erreur de connexion au serveur';
         errorEl.classList.remove('hidden');
@@ -235,28 +221,6 @@
         submitBtn.textContent = 'Se connecter';
       }
     });
-
-    // Vérifier si l'utilisateur est déjà connecté
-    const existingUser = JSON.parse(localStorage.getItem('user') || sessionStorage.getItem('user') || 'null');
-    if (existingUser) {
-      switch (existingUser.role) {
-        case 'ADMIN':
-          window.location.href = '/admin/dashboard';
-          break;
-        case 'ENSEIGNANT':
-          window.location.href = '/enseignant/dashboard';
-          break;
-        case 'SECRETAIRE':
-          window.location.href = '/secretaire/dashboard';
-          break;
-        case 'ENTREPRISE':
-          window.location.href = '/dashboard/entreprise';
-          break;
-        default:
-          window.location.href = '/profile';
-          break;
-      }
-    }
   </script>
 </body>
 

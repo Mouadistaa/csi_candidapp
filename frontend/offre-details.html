@@ -416,11 +416,7 @@
         }
 
         document.getElementById('logoutBtn').addEventListener('click', () => {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            sessionStorage.removeItem('token');
-            sessionStorage.removeItem('user');
-            window.location.href = '/login';
+            Auth.logout('Vous avez été déconnecté.');
         });
 
         // Fonction pour formater les dates
@@ -651,6 +647,7 @@
         loadOffreDetails();
         initAuth();
     </script>
+    <script src="/js/auth.js"></script>
     <script src="/js/notifications.js"></script>
 </body>
 

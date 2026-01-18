@@ -299,16 +299,24 @@ function getUserIdFromReq(req: Request): number | null {
 }
 
 // GET /api/enseignant/delegation/secretaire?userId=...
+// Vérifie si l'enseignant peut agir en tant que secrétaire (si une secrétaire de son groupe est en congé)
 export const getDelegationSecretaireActive = async (req: Request, res: Response) => {
   try {
     const userId = getUserIdFromReq(req);
     if (!userId) return res.status(400).json({ ok: false, error: 'userId manquant' });
 
+    // Vérifier si cet enseignant est référent d'un groupe dont la secrétaire est en congé
     const r = await query(
-      `SELECT conge_id, secretaire_id, date_debut, date_fin, motif
-       FROM public.v_delegation_secretaire_active_by_user
-       WHERE utilisateur_id = $1
-       LIMIT 1`,
+      `SELECT DISTINCT 
+              rs.secretaire_id,
+              rs.nom_groupe,
+              u.nom AS secretaire_nom,
+              u.email AS secretaire_email
+       FROM v_remplacant_secretaire rs
+       JOIN "Secretaire" s ON s.secretaire_id = rs.secretaire_id
+       JOIN "Utilisateur" u ON u.id = s.utilisateur_id
+       WHERE rs.remplacant_user_id = $1
+         AND s.en_conge = true`,
       [userId]
     );
 
@@ -316,7 +324,12 @@ export const getDelegationSecretaireActive = async (req: Request, res: Response)
       return res.json({ ok: true, active: false });
     }
 
-    return res.json({ ok: true, active: true, delegation: r.rows[0] });
+    return res.json({
+      ok: true,
+      active: true,
+      delegations: r.rows,
+      message: `Vous remplacez ${r.rows.length} secrétaire(s) en congé`
+    });
   } catch (e) {
     console.error(e);
     return res.status(500).json({ ok: false, error: 'Erreur délégation' });

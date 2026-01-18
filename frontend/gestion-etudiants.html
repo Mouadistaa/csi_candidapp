@@ -68,6 +68,15 @@
 
         <!-- User Menu -->
         <div class="flex items-center space-x-4">
+          <!-- Bouton retour enseignant (visible uniquement pour les enseignants remplaçants) -->
+          <a id="btnRetourEnseignant" href="/enseignant/dashboard"
+            class="hidden items-center space-x-1.5 px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-sm rounded-lg font-medium transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M11 15l-3-3m0 0l3-3m-3 3h8M3 12a9 9 0 1118 0 9 9 0 01-18 0z" />
+            </svg>
+            <span>Retour enseignant</span>
+          </a>
           <div id="userBadge" class="hidden md:flex items-center space-x-2 bg-primary-50 px-3 py-1.5 rounded-full">
             <div class="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center">
               <span id="userInitial" class="text-white font-semibold text-sm">SC</span>
@@ -194,6 +203,9 @@
     if (!user || !user.id) window.location.href = "/login.html";
     const userId = user.id;
 
+    // Détection si c'est un enseignant remplaçant
+    const isEnseignantRemplacant = user?.role === 'ENSEIGNANT';
+
     // ==================== UI INIT ====================
     function initUserUI() {
       const email = user?.email || '';
@@ -202,6 +214,17 @@
 
       document.getElementById('userInitial').textContent = initial;
       document.getElementById('userEmailBadge').textContent = email;
+
+      // Si c'est un enseignant remplaçant, adapter l'interface
+      if (isEnseignantRemplacant) {
+        const btnRetour = document.getElementById('btnRetourEnseignant');
+        if (btnRetour) {
+          btnRetour.classList.remove('hidden');
+          btnRetour.classList.add('flex');
+        }
+        const navProfil = document.getElementById('nav-profil');
+        if (navProfil) navProfil.style.display = 'none';
+      }
     }
 
     window.addEventListener("DOMContentLoaded", async () => {
@@ -233,10 +256,7 @@
 
     function setupEventListeners() {
       document.getElementById("logoutBtn").addEventListener("click", () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        sessionStorage.clear();
-        window.location.href = "/login";
+        Auth.logout('Vous avez été déconnecté.');
       });
 
       document.getElementById("refreshBtn").addEventListener("click", loadEtudiants);
@@ -390,5 +410,6 @@
         .replace(/'/g, "&#039;");
     }
   </script>
+  <script src="/js/auth.js"></script>
 </body>
 </html>

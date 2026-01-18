@@ -21,7 +21,10 @@ router.post('/etudiants', secCtrl.creerEtudiant);
 // Liste (EXPIRÉES)
 router.get('/attestations-expirees', secCtrl.getAttestationsExpirees);
 
-// ==================== CONGÉS (NOUVEAU) ====================
+// ==================== CONGÉS (SIMPLIFIÉ - BOOLÉEN) ====================
+router.get('/conges/statut', congeCtrl.getStatutConge);
+router.post('/conges/toggle', congeCtrl.toggleConge);
+// Compatibilité ancienne API
 router.get('/conges/remplacants', congeCtrl.listRemplacants);
 router.get('/conges', congeCtrl.getMesConges);
 router.post('/conges', congeCtrl.declarerConge);

@@ -1170,41 +1170,62 @@ alter table v_attestations_rc_expirees_secretaire
 
 grant select on v_attestations_rc_expirees_secretaire to role_secretaire;
 
+create view v_action_renoncer_candidature(candidature_id, type_acteur, justification) as
+SELECT c.id                    AS candidature_id,
+       NULL::character varying AS type_acteur,
+       NULL::text              AS justification
+FROM "Candidature" c;
+
+alter table v_action_renoncer_candidature
+    owner to m1user1_02;
+
+create view v_action_refuser_candidature(candidature_id) as
+SELECT "Candidature".id AS candidature_id
+FROM "Candidature";
+
+alter table v_action_refuser_candidature
+    owner to m1user1_02;
+
 create view v_secretaire_autorise_by_user(secretaire_id, utilisateur_id) as
 SELECT s.secretaire_id,
        s.utilisateur_id
 FROM "Secretaire" s
+WHERE s.en_conge = false
 UNION ALL
 SELECT s.secretaire_id,
-       e.utilisateur_id
+       ens.utilisateur_id
 FROM "Secretaire" s
-         JOIN "Enseignant" e ON true
+         JOIN "GroupeEtudiant" ge ON ge.secretaire_gestionnaire_id = s.secretaire_id
+         JOIN "Enseignant" ens ON ens.enseignant_id = ge.enseignant_referent_id
 WHERE s.en_conge = true;
 
 alter table v_secretaire_autorise_by_user
-    owner to m1user1_04;
+    owner to m1user1_03;
 
-grant select on v_secretaire_autorise_by_user to role_secretaire;
+create view v_action_toggle_conge_secretaire(secretaire_id, en_conge) as
+SELECT NULL::integer AS secretaire_id,
+       NULL::boolean AS en_conge;
 
-grant select on v_secretaire_autorise_by_user to role_enseignant;
+alter table v_action_toggle_conge_secretaire
+    owner to m1user1_03;
 
-create view v_delegation_secretaire_active_by_user(conge_id, secretaire_id, date_debut, date_fin, motif, utilisateur_id) as
-SELECT s.secretaire_id                              AS conge_id,
-       s.secretaire_id,
-       NULL::date                                   AS date_debut,
-       NULL::date                                   AS date_fin,
-       'Secrétaire en congé (mode simplifié)'::text AS motif,
-       e.utilisateur_id
+create view v_remplacant_secretaire
+            (secretaire_id, secretaire_user_id, remplacant_user_id, remplacant_nom, remplacant_email, groupe_id,
+             nom_groupe) as
+SELECT s.secretaire_id,
+       s.utilisateur_id   AS secretaire_user_id,
+       ens.utilisateur_id AS remplacant_user_id,
+       u.nom              AS remplacant_nom,
+       u.email            AS remplacant_email,
+       ge.groupe_id,
+       ge.nom_groupe
 FROM "Secretaire" s
-         JOIN "Enseignant" e ON true
-WHERE s.en_conge = true;
+         JOIN "GroupeEtudiant" ge ON ge.secretaire_gestionnaire_id = s.secretaire_id
+         JOIN "Enseignant" ens ON ens.enseignant_id = ge.enseignant_referent_id
+         JOIN "Utilisateur" u ON u.id = ens.utilisateur_id;
 
-alter table v_delegation_secretaire_active_by_user
-    owner to m1user1_04;
-
-grant select on v_delegation_secretaire_active_by_user to role_secretaire;
-
-grant select on v_delegation_secretaire_active_by_user to role_enseignant;
+alter table v_remplacant_secretaire
+    owner to m1user1_03;
 
 create function trg_action_postuler_func() returns trigger
     language plpgsql
@@ -1220,6 +1241,17 @@ BEGIN
 
     IF v_statut_offre IS DISTINCT FROM 'VALIDE' THEN
         RAISE EXCEPTION 'Impossible de postuler : Cette offre n''est pas disponible.';
+    END IF;
+
+-- Dans le trigger trg_creer_candidature, ajouter cette vérification :
+    IF EXISTS (
+        SELECT 1 FROM affectation a
+                          JOIN offre o_existant ON o_existant.id = a.offre_id
+                          JOIN offre o_nouveau ON o_nouveau.id = NEW.offre_id
+        WHERE a.etudiant_id = NEW.etudiant_id
+          AND (o_existant.date_debut, o_existant.date_fin) OVERLAPS (o_nouveau.date_debut, o_nouveau.date_fin)
+    ) THEN
+        RAISE EXCEPTION 'Vous avez déjà un stage validé sur cette période';
     END IF;
 
     IF EXISTS (
@@ -1935,42 +1967,6 @@ $$;
 
 alter function creer_notification(integer, notification_type_enum, text, text, text, text, integer) owner to m1user1_03;
 
-create function trg_action_declarer_conge_secretaire_ins() returns trigger
-    language plpgsql
-as
-$$
-DECLARE
-    v_role role_enum;
-BEGIN
-    IF NEW.date_fin < NEW.date_debut THEN
-        RAISE EXCEPTION 'date_fin doit être >= date_debut';
-    END IF;
-
-    -- si remplaçant fourni, doit être ENSEIGNANT (ou ADMIN si vous voulez)
-    IF NEW.remplacant_utilisateur_id IS NOT NULL THEN
-        SELECT u.role INTO v_role
-        FROM "Utilisateur" u
-        WHERE u.id = NEW.remplacant_utilisateur_id;
-
-        IF v_role IS NULL THEN
-            RAISE EXCEPTION 'Remplaçant introuvable';
-        END IF;
-
-        IF v_role <> 'ENSEIGNANT' AND v_role <> 'ADMIN' THEN
-            RAISE EXCEPTION 'Le remplaçant doit être ENSEIGNANT (ou ADMIN)';
-        END IF;
-    END IF;
-
-    INSERT INTO "CongeSecretaire"(secretaire_id, date_debut, date_fin, remplacant_utilisateur_id, motif)
-    VALUES (NEW.secretaire_id, NEW.date_debut, NEW.date_fin, NEW.remplacant_utilisateur_id, NEW.motif)
-    RETURNING conge_id INTO NEW.conge_id;
-
-    RETURN NEW;
-END;
-$$;
-
-alter function trg_action_declarer_conge_secretaire_ins() owner to m1user1_04;
-
 create function trg_notify_offre_soumise() returns trigger
     language plpgsql
 as
@@ -2642,3 +2638,178 @@ grant execute on function f_journal_log(integer, journal_type_enum, text) to rol
 grant execute on function f_journal_log(integer, journal_type_enum, text) to role_etudiant;
 
 grant execute on function f_journal_log(integer, journal_type_enum, text) to role_entreprise;
+
+create function trg_fnc_action_renoncer_candidature() returns trigger
+    language plpgsql
+as
+$$
+DECLARE
+    v_statut_actuel VARCHAR;
+BEGIN
+    -- A. Vérifier que la candidature existe
+    SELECT statut INTO v_statut_actuel
+    FROM public."Candidature"
+    WHERE id = NEW.candidature_id;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Candidature introuvable (ID: %)', NEW.candidature_id;
+    END IF;
+
+    -- B. Archivage dans la table Renoncement
+    INSERT INTO public."Renoncement" (candidature_id, type_acteur, justification)
+    VALUES (NEW.candidature_id, NEW.type_acteur, NEW.justification);
+
+    -- C. Nettoyage de l'Affectation (Si le stage était déjà validé)
+    DELETE FROM public."Affectation"
+    WHERE candidature_id = NEW.candidature_id;
+
+    -- D. Mise à jour du statut de la Candidature
+    -- On utilise 'ANNULE' pour signifier que le processus est stoppé
+    UPDATE public."Candidature"
+    SET statut = 'ANNULE'
+    WHERE id = NEW.candidature_id;
+
+    RETURN NEW;
+END;
+$$;
+
+alter function trg_fnc_action_renoncer_candidature() owner to m1user1_02;
+
+create trigger trg_action_renoncer_candidature
+    instead of insert
+    on v_action_renoncer_candidature
+    for each row
+execute procedure trg_fnc_action_renoncer_candidature();
+
+create function trg_fnc_affectation_cleanup() returns trigger
+    language plpgsql
+as
+$$
+DECLARE
+    v_offre_id UUID;
+    v_etudiant_id UUID;
+    v_date_debut_stage DATE;
+    v_duree_mois INTEGER;
+    v_date_fin_stage DATE;
+BEGIN
+    -- 1. Récupération des infos contextuelles de l'affectation créée
+    -- On remonte vers la candidature et l'offre pour avoir les dates et les IDs
+    SELECT
+        c.offre_id,
+        c.etudiant_id,
+        o.date_debut,
+        o.duree_mois
+    INTO
+        v_offre_id,
+        v_etudiant_id,
+        v_date_debut_stage,
+        v_duree_mois
+    FROM public."Candidature" c
+             JOIN public."Offre" o ON c.offre_id = o.id
+    WHERE c.id = NEW.candidature_id;
+
+    -- Calcul de la date de fin pour la comparaison temporelle
+    v_date_fin_stage := v_date_debut_stage + (v_duree_mois * INTERVAL '1 month');
+
+    -- =================================================================
+    -- RÈGLE 1 : "Offre Pourvue"
+    -- On refuse tous les autres candidats sur CETTE offre
+    -- =================================================================
+    UPDATE public."Candidature"
+    SET statut = 'REFUSE'
+    WHERE offre_id = v_offre_id
+      AND id != NEW.candidature_id -- Sauf celle qu'on vient de valider !
+      AND statut NOT IN ('REFUSE', 'ANNULE'); -- Inutile de toucher aux dossiers déjà clos
+
+    -- (Optionnel : Tu pourrais insérer un log ici pour dire "Refus automatique système")
+
+
+    -- =================================================================
+    -- RÈGLE 2 : "Non-Ubiquité" (Chevauchement temporel pour l'étudiant)
+    -- On annule les autres candidatures 'RETENU' de cet étudiant qui tombent en même temps
+    -- =================================================================
+
+    -- On utilise une sous-requête UPDATE avec jointure pour vérifier les dates
+    UPDATE public."Candidature" c
+    SET statut = 'REFUSE' -- Ou 'ANNULE' selon ta préférence
+    FROM public."Offre" o_other
+    WHERE c.offre_id = o_other.id
+      AND c.etudiant_id = v_etudiant_id       -- C'est le même étudiant
+      AND c.id != NEW.candidature_id          -- Pas l'affectation actuelle
+      AND c.statut = 'RETENU'                 -- Seulement celles qui étaient en attente de validation
+
+      -- Logique de chevauchement de dates (OVERLAPS)
+      -- Période A (Stage validé) vs Période B (Autre candidature)
+      AND (v_date_debut_stage, v_date_fin_stage) OVERLAPS
+          (o_other.date_debut, o_other.date_debut + (o_other.duree_mois * INTERVAL '1 month'));
+
+    RETURN NEW;
+END;
+$$;
+
+alter function trg_fnc_affectation_cleanup() owner to m1user1_02;
+
+create trigger trg_affectation_cleanup
+    after insert
+    on "Affectation"
+    for each row
+execute procedure trg_fnc_affectation_cleanup();
+
+create function trg_fnc_action_refuser_candidature() returns trigger
+    language plpgsql
+as
+$$
+DECLARE
+    v_statut_actuel VARCHAR;
+BEGIN
+    -- A. Vérification basique
+    SELECT statut INTO v_statut_actuel
+    FROM public."Candidature"
+    WHERE id = NEW.candidature_id;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Candidature introuvable (ID: %)', NEW.candidature_id;
+    END IF;
+
+    -- B. Sécurité : On ne peut pas refuser un dossier déjà acté en stage
+    PERFORM 1 FROM public."Affectation" WHERE candidature_id = NEW.candidature_id;
+    IF FOUND THEN
+        RAISE EXCEPTION 'Action impossible : Une affectation (stage validé) existe déjà.';
+    END IF;
+
+    -- C. Action : Changement de statut
+    UPDATE public."Candidature"
+    SET statut = 'REFUSE'
+    WHERE id = NEW.candidature_id;
+
+    RETURN NEW;
+END;
+$$;
+
+alter function trg_fnc_action_refuser_candidature() owner to m1user1_02;
+
+create trigger trg_action_refuser_candidature
+    instead of insert
+    on v_action_refuser_candidature
+    for each row
+execute procedure trg_fnc_action_refuser_candidature();
+
+create function trg_toggle_conge_secretaire() returns trigger
+    language plpgsql
+as
+$$
+BEGIN
+    UPDATE "Secretaire"
+    SET en_conge = NEW.en_conge
+    WHERE secretaire_id = NEW.secretaire_id;
+    RETURN NEW;
+END;
+$$;
+
+alter function trg_toggle_conge_secretaire() owner to m1user1_03;
+
+create trigger trg_toggle_conge
+    instead of insert
+    on v_action_toggle_conge_secretaire
+    for each row
+execute procedure trg_toggle_conge_secretaire();

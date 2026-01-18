@@ -215,11 +215,7 @@
     }
 
     document.getElementById('logoutBtn').addEventListener('click', () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        sessionStorage.removeItem('token');
-        sessionStorage.removeItem('user');
-        window.location.href = '/login';
+        Auth.logout('Vous avez été déconnecté.');
     });
 
     function formatDate(dateStr) {
@@ -417,6 +413,7 @@
     loadStatus();
     initUserHeader();
 </script>
+<script src="/js/auth.js"></script>
 <script src="/js/notifications.js"></script>
 </body>
 </html>

@@ -37,17 +37,42 @@ export async function postulerHandler(req: Request, res: Response) {
     } catch (error: any) {
         console.error('Erreur lors de la candidature:', error);
 
-        // Détection d'erreur de duplicata / règle métier
+        const errorMessage = error.message?.toLowerCase() || '';
+
+        // Chevauchement avec une affectation existante
+        if (errorMessage.includes('stage validé') || errorMessage.includes('affectation')) {
+            return res.status(409).json({
+                ok: false,
+                error: 'Vous avez déjà un stage validé sur cette période'
+            });
+        }
+
+        // Chevauchement avec une candidature retenue
+        if (errorMessage.includes('candidature retenue')) {
+            return res.status(409).json({
+                ok: false,
+                error: 'Vous avez déjà une candidature retenue sur cette période'
+            });
+        }
+
+        // Candidature déjà existante pour cette offre
         if (
             error.code === '23505' ||
-            error.message?.includes('duplicate') ||
-            error.message?.includes('unique') ||
-            error.message?.includes('active') ||
-            error.message?.includes('déjà')
+            errorMessage.includes('duplicate') ||
+            errorMessage.includes('unique') ||
+            errorMessage.includes('déjà une candidature')
         ) {
             return res.status(409).json({
                 ok: false,
                 error: 'Vous avez déjà une candidature active pour cette offre'
+            });
+        }
+
+        // Offre non disponible
+        if (errorMessage.includes('pas disponible') || errorMessage.includes('offre')) {
+            return res.status(400).json({
+                ok: false,
+                error: 'Cette offre n\'est pas disponible aux candidatures'
             });
         }
 
