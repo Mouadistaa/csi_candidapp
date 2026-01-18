@@ -55,15 +55,23 @@ export const getStats = async (req: Request, res: Response) => {
       return res.status(403).json({ ok: false, error: 'Profil entreprise introuvable' });
     }
 
+    // Requête directe pour des stats fiables
     const sql = `
-      SELECT active, pending, candidatures
-      FROM v_dashboard_entreprise_stats
+      SELECT 
+        COALESCE(COUNT(*) FILTER (WHERE statut_validation = 'VALIDE'), 0) AS active,
+        COALESCE(COUNT(*) FILTER (WHERE statut_validation = 'EN_ATTENTE'), 0) AS pending,
+        COALESCE((
+          SELECT COUNT(*) 
+          FROM "Candidature" c 
+          JOIN "Offre" o2 ON o2.id = c.offre_id 
+          WHERE o2.entreprise_id = $1
+            AND c.statut NOT IN ('ANNULE', 'REFUSE')
+        ), 0) AS candidatures
+      FROM "Offre"
       WHERE entreprise_id = $1
-      LIMIT 1
     `;
     const result = await query(sql, [entrepriseId]);
 
-    // ✅ Garde-fou : si aucune ligne, on renvoie 0/0/0 au lieu de crash
     const row = result.rows[0] ?? { active: 0, pending: 0, candidatures: 0 };
 
     const stats = {
@@ -280,5 +288,307 @@ export const createOffre = async (req: Request, res: Response) => {
   } catch (error) {
     console.error('createOffre error:', error);
     return res.status(500).json({ ok: false, error: 'Erreur création offre' });
+  }
+};
+
+/* ===================== 6) MODIFIER OFFRE ===================== */
+// PUT /api/entreprise/offres/:id?userId=...
+// body: { type, titre, description, competences, localisation_pays, localisation_ville, duree_mois, remuneration, date_debut, date_expiration }
+export const updateOffre = async (req: Request, res: Response) => {
+  try {
+    const userId = getUserIdFromReq(req);
+    const offreId = Number(req.params.id);
+
+    if (!userId) {
+      return res.status(400).json({ ok: false, error: 'userId manquant' });
+    }
+
+    if (!offreId || isNaN(offreId)) {
+      return res.status(400).json({ ok: false, error: 'ID offre invalide' });
+    }
+
+    const entrepriseId = await getEntrepriseIdFromUser(userId);
+    if (!entrepriseId) {
+      return res.status(403).json({ ok: false, error: 'Profil entreprise introuvable' });
+    }
+
+    const {
+      type,
+      titre,
+      description,
+      competences,
+      localisation_pays,
+      localisation_ville,
+      duree_mois,
+      remuneration,
+      date_debut,
+      date_expiration,
+    } = req.body || {};
+
+    // Validation minimale
+    if (
+      !type ||
+      !titre ||
+      !localisation_pays ||
+      duree_mois === undefined ||
+      remuneration === undefined ||
+      !date_debut ||
+      !date_expiration
+    ) {
+      return res.status(400).json({
+        ok: false,
+        error: 'Champs requis: type, titre, localisation_pays, duree_mois, remuneration, date_debut, date_expiration',
+      });
+    }
+
+    // Vérifier que l'offre appartient à l'entreprise et récupérer les anciennes valeurs
+    const oldOffreResult = await query(
+      `SELECT type, duree_mois, remuneration, date_debut, date_expiration, statut_validation
+       FROM "Offre"
+       WHERE id = $1 AND entreprise_id = $2`,
+      [offreId, entrepriseId]
+    );
+
+    if (oldOffreResult.rows.length === 0) {
+      return res.status(404).json({ ok: false, error: 'Offre introuvable ou non autorisée' });
+    }
+
+    const oldOffre = oldOffreResult.rows[0];
+
+    // Vérifier s'il y a des affectations actives
+    const affectationCheck = await query(
+      `SELECT 1 FROM "Affectation" a
+       JOIN "Candidature" c ON c.id = a.candidature_id
+       WHERE c.offre_id = $1
+       LIMIT 1`,
+      [offreId]
+    );
+
+    if (affectationCheck.rows.length > 0) {
+      return res.status(400).json({
+        ok: false,
+        error: 'Impossible de modifier cette offre : elle a des affectations en cours.'
+      });
+    }
+
+    // Déterminer si une revalidation est nécessaire (critères sensibles modifiés)
+    let needsRevalidation = false;
+    if (oldOffre.statut_validation === 'VALIDE') {
+      if (
+        type !== oldOffre.type ||
+        Number(duree_mois) !== oldOffre.duree_mois ||
+        Number(remuneration) !== Number(oldOffre.remuneration) ||
+        date_debut !== oldOffre.date_debut?.toISOString?.()?.split('T')[0] ||
+        date_expiration !== oldOffre.date_expiration?.toISOString?.()?.split('T')[0]
+      ) {
+        needsRevalidation = true;
+      }
+    }
+
+    // Mettre à jour l'offre
+    const sql = `
+      UPDATE "Offre"
+      SET type = $1,
+          titre = $2,
+          description = $3,
+          competences = $4,
+          localisation_pays = $5,
+          localisation_ville = $6,
+          duree_mois = $7,
+          remuneration = $8,
+          date_debut = $9,
+          date_expiration = $10,
+          statut_validation = CASE WHEN $13 THEN 'EN_ATTENTE' ELSE statut_validation END,
+          date_soumission = CASE WHEN $13 THEN CURRENT_DATE ELSE date_soumission END,
+          date_validation = CASE WHEN $13 THEN NULL ELSE date_validation END
+      WHERE id = $11
+        AND entreprise_id = $12
+      RETURNING id
+    `;
+
+    const params = [
+      type,
+      titre,
+      description ?? null,
+      competences ?? null,
+      localisation_pays,
+      localisation_ville ?? null,
+      Number(duree_mois),
+      Number(remuneration),
+      date_debut,
+      date_expiration,
+      offreId,
+      entrepriseId,
+      needsRevalidation,
+    ];
+
+    const result = await query(sql, params);
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ ok: false, error: 'Offre introuvable ou non autorisée' });
+    }
+
+
+    return res.status(200).json({
+      ok: true,
+      message: needsRevalidation
+        ? 'Offre modifiée. Les modifications nécessitent une nouvelle validation par l\'enseignant.'
+        : 'Offre modifiée avec succès.',
+      needsRevalidation,
+    });
+  } catch (error: any) {
+    console.error('updateOffre error:', error);
+
+    // Gestion des erreurs spécifiques du trigger
+    if (error.message?.includes('candidatures actives') || error.message?.includes('affectation')) {
+      return res.status(400).json({
+        ok: false,
+        error: 'Impossible de modifier cette offre : elle a des candidatures ou affectations en cours.'
+      });
+    }
+
+    return res.status(500).json({ ok: false, error: 'Erreur modification offre' });
+  }
+};
+
+/* ===================== 7) SUPPRIMER OFFRE ===================== */
+// DELETE /api/entreprise/offres/:id?userId=...
+export const deleteOffre = async (req: Request, res: Response) => {
+  try {
+    const userId = getUserIdFromReq(req);
+    const offreId = Number(req.params.id);
+
+    if (!userId) {
+      return res.status(400).json({ ok: false, error: 'userId manquant' });
+    }
+
+    if (!offreId || isNaN(offreId)) {
+      return res.status(400).json({ ok: false, error: 'ID offre invalide' });
+    }
+
+    const entrepriseId = await getEntrepriseIdFromUser(userId);
+    if (!entrepriseId) {
+      return res.status(403).json({ ok: false, error: 'Profil entreprise introuvable' });
+    }
+
+    // Vérifier que l'offre appartient à l'entreprise
+    const offreCheck = await query(
+      `SELECT 1 FROM "Offre" WHERE id = $1 AND entreprise_id = $2`,
+      [offreId, entrepriseId]
+    );
+
+    if (offreCheck.rows.length === 0) {
+      return res.status(404).json({ ok: false, error: 'Offre introuvable ou non autorisée' });
+    }
+
+    // Vérifier s'il y a des candidatures actives
+    const candidaturesCheck = await query(
+      `SELECT 1 FROM "Candidature"
+       WHERE offre_id = $1 AND statut NOT IN ('ANNULE', 'REFUSE')
+       LIMIT 1`,
+      [offreId]
+    );
+
+    if (candidaturesCheck.rows.length > 0) {
+      return res.status(400).json({
+        ok: false,
+        error: 'Impossible de supprimer cette offre : elle a des candidatures actives.'
+      });
+    }
+
+    // Vérifier s'il y a des affectations
+    const affectationsCheck = await query(
+      `SELECT 1 FROM "Affectation" a
+       JOIN "Candidature" c ON c.id = a.candidature_id
+       WHERE c.offre_id = $1
+       LIMIT 1`,
+      [offreId]
+    );
+
+    if (affectationsCheck.rows.length > 0) {
+      return res.status(400).json({
+        ok: false,
+        error: 'Impossible de supprimer cette offre : elle a des affectations en cours.'
+      });
+    }
+
+    // Supprimer les candidatures annulées/refusées associées
+    await query(`DELETE FROM "Candidature" WHERE offre_id = $1`, [offreId]);
+
+    // Supprimer l'offre
+    const result = await query(
+      `DELETE FROM "Offre" WHERE id = $1 AND entreprise_id = $2 RETURNING id`,
+      [offreId, entrepriseId]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ ok: false, error: 'Offre introuvable ou non autorisée' });
+    }
+
+    return res.status(200).json({
+      ok: true,
+      message: 'Offre supprimée avec succès',
+    });
+  } catch (error: any) {
+    console.error('deleteOffre error:', error);
+
+
+    return res.status(500).json({ ok: false, error: 'Erreur suppression offre' });
+  }
+};
+
+/* ===================== 8) OBTENIR UNE OFFRE ===================== */
+// GET /api/entreprise/offres/:id?userId=...
+export const getOffreById = async (req: Request, res: Response) => {
+  try {
+    const userId = getUserIdFromReq(req);
+    const offreId = Number(req.params.id);
+
+    if (!userId) {
+      return res.status(400).json({ ok: false, error: 'userId manquant' });
+    }
+
+    if (!offreId || isNaN(offreId)) {
+      return res.status(400).json({ ok: false, error: 'ID offre invalide' });
+    }
+
+    const entrepriseId = await getEntrepriseIdFromUser(userId);
+    if (!entrepriseId) {
+      return res.status(403).json({ ok: false, error: 'Profil entreprise introuvable' });
+    }
+
+    const sql = `
+      SELECT 
+        o.id AS offre_id,
+        o.entreprise_id,
+        o.type,
+        o.titre,
+        o.description,
+        o.competences,
+        o.localisation_pays,
+        o.localisation_ville,
+        o.duree_mois,
+        o.remuneration,
+        o.date_debut,
+        o.date_expiration,
+        o.statut_validation,
+        o.date_soumission,
+        o.date_validation
+      FROM "Offre" o
+      WHERE o.id = $1
+        AND o.entreprise_id = $2
+      LIMIT 1
+    `;
+
+    const result = await query(sql, [offreId, entrepriseId]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ ok: false, error: 'Offre introuvable' });
+    }
+
+    return res.status(200).json({ ok: true, offre: result.rows[0] });
+  } catch (error) {
+    console.error('getOffreById error:', error);
+    return res.status(500).json({ ok: false, error: 'Erreur récupération offre' });
   }
 };

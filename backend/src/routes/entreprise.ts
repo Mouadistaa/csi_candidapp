@@ -15,7 +15,16 @@ router.get('/candidatures', entCtrl.getCandidaturesRecues);
 // 4. Action de décision (Accepter/Refuser)
 router.post('/candidature/decision', entCtrl.deciderCandidature);
 
-// 5) Publier une offre (si tu ajoutes createOffre dans ton controller)
+// 5) Publier une offre
 router.post('/offres', entCtrl.createOffre);
+
+// 6) Obtenir une offre spécifique
+router.get('/offres/:id', entCtrl.getOffreById);
+
+// 7) Modifier une offre
+router.put('/offres/:id', entCtrl.updateOffre);
+
+// 8) Supprimer une offre
+router.delete('/offres/:id', entCtrl.deleteOffre);
 
 export default router;

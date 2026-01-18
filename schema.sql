@@ -323,9 +323,9 @@ create table "Renoncement"
         constraint fk_renoncement_cand
             references "Candidature"
             on delete cascade,
-    type             renoncement_type_enum     not null,
     justification    text,
-    date_renoncement date default CURRENT_DATE not null
+    date_renoncement date default CURRENT_DATE not null,
+    type             unknown
 );
 
 alter table "Renoncement"
@@ -648,34 +648,6 @@ FROM "Offre" o
 GROUP BY o.entreprise_id;
 
 alter table v_dashboard_entreprise_stats
-    owner to m1user1_04;
-
-create view v_mes_offres_entreprise
-            (id, entreprise_id, type, titre, description, competences, localisation_pays, localisation_ville,
-             duree_mois, remuneration, date_debut, date_expiration, statut_validation, date_soumission, date_validation,
-             nb_candidats)
-as
-SELECT o.id,
-       o.entreprise_id,
-       o.type,
-       o.titre,
-       o.description,
-       o.competences,
-       o.localisation_pays,
-       o.localisation_ville,
-       o.duree_mois,
-       o.remuneration,
-       o.date_debut,
-       o.date_expiration,
-       o.statut_validation,
-       o.date_soumission,
-       o.date_validation,
-       count(c.id) AS nb_candidats
-FROM "Offre" o
-         LEFT JOIN "Candidature" c ON c.offre_id = o.id
-GROUP BY o.id;
-
-alter table v_mes_offres_entreprise
     owner to m1user1_04;
 
 create view v_candidatures_recues_entreprise
@@ -1227,6 +1199,69 @@ FROM "Secretaire" s
 alter table v_remplacant_secretaire
     owner to m1user1_03;
 
+create view v_action_modifier_offre
+            (offre_id, entreprise_id, type, titre, description, competences, localisation_pays, localisation_ville,
+             duree_mois, remuneration, date_debut, date_expiration, statut_validation, needs_revalidation)
+as
+SELECT o.id  AS offre_id,
+       o.entreprise_id,
+       o.type,
+       o.titre,
+       o.description,
+       o.competences,
+       o.localisation_pays,
+       o.localisation_ville,
+       o.duree_mois,
+       o.remuneration,
+       o.date_debut,
+       o.date_expiration,
+       o.statut_validation,
+       false AS needs_revalidation
+FROM "Offre" o;
+
+alter table v_action_modifier_offre
+    owner to m1user1_03;
+
+create view v_action_supprimer_offre(offre_id, entreprise_id) as
+SELECT o.id AS offre_id,
+       o.entreprise_id
+FROM "Offre" o;
+
+alter table v_action_supprimer_offre
+    owner to m1user1_03;
+
+create view v_mes_offres_entreprise
+            (offre_id, entreprise_id, type, titre, description, competences, localisation_pays, localisation_ville,
+             duree_mois, remuneration, date_debut, date_expiration, statut_validation, date_soumission, date_validation,
+             entreprise_nom, nb_candidats)
+as
+SELECT o.id                AS offre_id,
+       o.entreprise_id,
+       o.type,
+       o.titre,
+       o.description,
+       o.competences,
+       o.localisation_pays,
+       o.localisation_ville,
+       o.duree_mois,
+       o.remuneration,
+       o.date_debut,
+       o.date_expiration,
+       o.statut_validation,
+       o.date_soumission,
+       o.date_validation,
+       e.raison_sociale    AS entreprise_nom,
+       COALESCE((SELECT count(*) AS count
+                 FROM "Candidature" c
+                 WHERE c.offre_id = o.id
+                   AND (c.statut <> ALL (ARRAY ['ANNULE'::cand_statut_enum, 'REFUSE'::cand_statut_enum]))),
+                0::bigint) AS nb_candidats
+FROM "Offre" o
+         JOIN "Entreprise" e ON e.entreprise_id = o.entreprise_id;
+
+alter table v_mes_offres_entreprise
+    owner to m1user1_03;
+
 create function trg_action_postuler_func() returns trigger
     language plpgsql
 as
@@ -1235,7 +1270,10 @@ DECLARE
     v_statut_offre validation_statut_enum;
     v_user_id int;
     v_candidature_id int;
+    v_date_debut_nouvelle DATE;
+    v_date_fin_nouvelle DATE;
 BEGIN
+    -- 1. Vérifier que l'offre est validée
     SELECT statut_validation INTO v_statut_offre
     FROM "Offre" WHERE id = NEW.offre_id;
 
@@ -1243,31 +1281,44 @@ BEGIN
         RAISE EXCEPTION 'Impossible de postuler : Cette offre n''est pas disponible.';
     END IF;
 
--- Dans le trigger trg_creer_candidature, ajouter cette vérification :
+    -- 2. Récupérer les dates de la nouvelle offre
+    SELECT date_debut,
+           date_debut + (duree_mois * INTERVAL '1 month')
+    INTO v_date_debut_nouvelle, v_date_fin_nouvelle
+    FROM "Offre"
+    WHERE id = NEW.offre_id;
+
+    -- 3. Vérifier le chevauchement avec les CANDIDATURES RETENUES (validées par l'entreprise)
     IF EXISTS (
-        SELECT 1 FROM affectation a
-                          JOIN offre o_existant ON o_existant.id = a.offre_id
-                          JOIN offre o_nouveau ON o_nouveau.id = NEW.offre_id
-        WHERE a.etudiant_id = NEW.etudiant_id
-          AND (o_existant.date_debut, o_existant.date_fin) OVERLAPS (o_nouveau.date_debut, o_nouveau.date_fin)
+        SELECT 1
+        FROM "Candidature" c
+                 JOIN "Offre" o_existant ON o_existant.id = c.offre_id
+        WHERE c.etudiant_id = NEW.etudiant_id
+          AND c.offre_id != NEW.offre_id  -- Pas la même offre
+          AND c.statut = 'ACCEPTE'         -- Candidature retenue/validée
+          AND (o_existant.date_debut, o_existant.date_debut + (o_existant.duree_mois * INTERVAL '1 month'))
+            OVERLAPS (v_date_debut_nouvelle, v_date_fin_nouvelle)
     ) THEN
-        RAISE EXCEPTION 'Vous avez déjà un stage validé sur cette période';
+        RAISE EXCEPTION 'Impossible de postuler : Vous avez déjà une candidature retenue sur cette période.';
     END IF;
 
+    -- 4. Vérifier si l'étudiant n'a pas déjà candidaté à cette offre
     IF EXISTS (
         SELECT 1
         FROM "Candidature"
         WHERE offre_id = NEW.offre_id
           AND etudiant_id = NEW.etudiant_id
-          AND statut != 'ANNULE'
+          AND statut NOT IN ('ANNULE', 'REFUSE')
     ) THEN
-        RAISE EXCEPTION 'Vous avez déjà une candidature pour cette offre.';
+        RAISE EXCEPTION 'Vous avez déjà une candidature active pour cette offre.';
     END IF;
 
+    -- 5. Créer la candidature
     INSERT INTO "Candidature" (offre_id, etudiant_id, source, statut, date_candidature)
     VALUES (NEW.offre_id, NEW.etudiant_id, NEW.source, 'EN_ATTENTE', CURRENT_DATE)
     RETURNING id INTO v_candidature_id;
 
+    -- 6. Log
     SELECT utilisateur_id INTO v_user_id
     FROM "Etudiant"
     WHERE etudiant_id = NEW.etudiant_id;
@@ -2813,3 +2864,140 @@ create trigger trg_toggle_conge
     on v_action_toggle_conge_secretaire
     for each row
 execute procedure trg_toggle_conge_secretaire();
+
+create function trg_action_modifier_offre_func() returns trigger
+    language plpgsql
+as
+$$
+DECLARE
+    v_old_type VARCHAR;
+    v_old_duree INT;
+    v_old_remuneration NUMERIC;
+    v_old_date_debut DATE;
+    v_old_date_expiration DATE;
+    v_old_statut VARCHAR;
+    v_needs_revalidation BOOLEAN := FALSE;
+    v_has_active_affectation BOOLEAN := FALSE;
+BEGIN
+    -- Récupérer les anciennes valeurs
+    SELECT type, duree_mois, remuneration, date_debut, date_expiration, statut_validation
+    INTO v_old_type, v_old_duree, v_old_remuneration, v_old_date_debut, v_old_date_expiration, v_old_statut
+    FROM "Offre"
+    WHERE id = OLD.offre_id AND entreprise_id = OLD.entreprise_id;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Offre introuvable ou non autorisée';
+    END IF;
+
+    -- Vérifier s'il y a des affectations actives (stage validé)
+    SELECT EXISTS(
+        SELECT 1 FROM "Affectation" a
+                          JOIN "Candidature" c ON c.id = a.candidature_id
+        WHERE c.offre_id = OLD.offre_id
+    ) INTO v_has_active_affectation;
+
+    IF v_has_active_affectation THEN
+        RAISE EXCEPTION 'Impossible de modifier cette offre : elle a des affectations en cours.';
+    END IF;
+
+    -- Déterminer si une revalidation est nécessaire (critères sensibles)
+    -- Critères sensibles : type, durée, rémunération, dates
+    IF v_old_statut = 'VALIDE' THEN
+        IF NEW.type IS DISTINCT FROM v_old_type
+            OR NEW.duree_mois IS DISTINCT FROM v_old_duree
+            OR NEW.remuneration IS DISTINCT FROM v_old_remuneration
+            OR NEW.date_debut IS DISTINCT FROM v_old_date_debut
+            OR NEW.date_expiration IS DISTINCT FROM v_old_date_expiration THEN
+            v_needs_revalidation := TRUE;
+        END IF;
+    END IF;
+
+    -- Mettre à jour l'offre
+    UPDATE "Offre"
+    SET type = NEW.type,
+        titre = NEW.titre,
+        description = NEW.description,
+        competences = NEW.competences,
+        localisation_pays = NEW.localisation_pays,
+        localisation_ville = NEW.localisation_ville,
+        duree_mois = NEW.duree_mois,
+        remuneration = NEW.remuneration,
+        date_debut = NEW.date_debut,
+        date_expiration = NEW.date_expiration,
+        -- Remettre en attente si critères sensibles modifiés
+        statut_validation = CASE WHEN v_needs_revalidation THEN 'EN_ATTENTE' ELSE statut_validation END,
+        date_soumission = CASE WHEN v_needs_revalidation THEN CURRENT_DATE ELSE date_soumission END,
+        date_validation = CASE WHEN v_needs_revalidation THEN NULL ELSE date_validation END
+    WHERE id = OLD.offre_id AND entreprise_id = OLD.entreprise_id;
+
+    -- Retourner avec l'info de revalidation
+    NEW.needs_revalidation := v_needs_revalidation;
+
+    RETURN NEW;
+END;
+$$;
+
+alter function trg_action_modifier_offre_func() owner to m1user1_03;
+
+create trigger trg_modifier_offre
+    instead of update
+    on v_action_modifier_offre
+    for each row
+execute procedure trg_action_modifier_offre_func();
+
+create function trg_action_supprimer_offre_func() returns trigger
+    language plpgsql
+as
+$$
+DECLARE
+    v_has_candidatures BOOLEAN := FALSE;
+    v_has_affectations BOOLEAN := FALSE;
+BEGIN
+    -- Vérifier que l'offre appartient bien à l'entreprise
+    IF NOT EXISTS (
+        SELECT 1 FROM "Offre"
+        WHERE id = OLD.offre_id AND entreprise_id = OLD.entreprise_id
+    ) THEN
+        RAISE EXCEPTION 'Offre introuvable ou non autorisée';
+    END IF;
+
+    -- Vérifier s'il y a des candidatures actives (non annulées/refusées)
+    SELECT EXISTS(
+        SELECT 1 FROM "Candidature"
+        WHERE offre_id = OLD.offre_id
+          AND statut NOT IN ('ANNULE', 'REFUSE')
+    ) INTO v_has_candidatures;
+
+    IF v_has_candidatures THEN
+        RAISE EXCEPTION 'Impossible de supprimer cette offre : elle a des candidatures actives.';
+    END IF;
+
+    -- Vérifier s'il y a des affectations
+    SELECT EXISTS(
+        SELECT 1 FROM "Affectation" a
+                          JOIN "Candidature" c ON c.id = a.candidature_id
+        WHERE c.offre_id = OLD.offre_id
+    ) INTO v_has_affectations;
+
+    IF v_has_affectations THEN
+        RAISE EXCEPTION 'Impossible de supprimer cette offre : elle a des affectations en cours.';
+    END IF;
+
+    -- Supprimer les candidatures annulées/refusées associées
+    DELETE FROM "Candidature" WHERE offre_id = OLD.offre_id;
+
+    -- Supprimer l'offre
+    DELETE FROM "Offre" WHERE id = OLD.offre_id AND entreprise_id = OLD.entreprise_id;
+
+    RETURN OLD;
+END;
+$$;
+
+alter function trg_action_supprimer_offre_func() owner to m1user1_03;
+
+create trigger trg_supprimer_offre
+    instead of delete
+    on v_action_supprimer_offre
+    for each row
+execute procedure trg_action_supprimer_offre_func();
+

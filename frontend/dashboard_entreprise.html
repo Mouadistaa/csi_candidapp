@@ -208,6 +208,122 @@
 
     </main>
 
+    <!-- Modal Édition Offre -->
+    <div id="editModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white w-full max-w-2xl rounded-2xl shadow-xl max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white rounded-t-2xl">
+                <h3 class="text-xl font-bold text-gray-900">Modifier l'offre</h3>
+                <button onclick="closeEditModal()" class="p-2 hover:bg-gray-100 rounded-lg text-gray-500">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <form id="editOffreForm" class="p-6 space-y-4">
+                <input type="hidden" id="editOffreId">
+
+                <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-800">
+                    <strong>Note :</strong> Modifier le type, la rémunération, la durée ou les dates remettra l'offre en attente de validation.
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Type *</label>
+                        <select id="editType" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500" required>
+                            <option value="STAGE">Stage</option>
+                            <option value="ALTERNANCE">Alternance</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Titre *</label>
+                        <input type="text" id="editTitre" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500" required>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <textarea id="editDescription" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Compétences requises</label>
+                    <input type="text" id="editCompetences" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500" placeholder="Ex: React, Node.js, SQL">
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Pays *</label>
+                        <input type="text" id="editPays" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Ville</label>
+                        <input type="text" id="editVille" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Durée (mois) *</label>
+                        <input type="number" id="editDuree" min="1" max="24" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Rémunération (€/mois) *</label>
+                        <input type="number" id="editRemuneration" min="0" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500" required>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Date de début *</label>
+                        <input type="date" id="editDateDebut" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Date d'expiration *</label>
+                        <input type="date" id="editDateExpiration" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-primary-500 focus:border-primary-500" required>
+                    </div>
+                </div>
+
+                <div id="editError" class="hidden text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3"></div>
+
+                <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
+                    <button type="button" onclick="closeEditModal()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
+                        Annuler
+                    </button>
+                    <button type="submit" id="editSubmitBtn" class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition flex items-center space-x-2">
+                        <span>Enregistrer</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Confirmation Suppression -->
+    <div id="deleteModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4">
+        <div class="bg-white w-full max-w-md rounded-2xl shadow-xl">
+            <div class="p-6">
+                <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-bold text-gray-900 text-center mb-2">Supprimer l'offre ?</h3>
+                <p id="deleteModalText" class="text-gray-600 text-center mb-6">Êtes-vous sûr de vouloir supprimer cette offre ? Cette action est irréversible.</p>
+
+                <input type="hidden" id="deleteOffreId">
+
+                <div class="flex gap-3">
+                    <button onclick="closeDeleteModal()" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
+                        Annuler
+                    </button>
+                    <button onclick="deleteOffre()" id="deleteConfirmBtn" class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
+                        Supprimer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer class="bg-gray-900 text-white py-6 mt-12">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-400 text-sm">
@@ -277,16 +393,22 @@
             offres.forEach(offre => {
                 const card = document.createElement('div');
                 card.className = `bg-white rounded-xl shadow-sm p-6 card-hover border-l-4 ${getBorderColor(offre.statut_validation)}`;
-                
+                card.id = `offre-${offre.offre_id || offre.id}`;
+
                 // Nombre de candidats (mockup si pas encore dispo en back)
                 const nbCandidats = offre.nb_candidats || 0;
+                const offreId = offre.offre_id || offre.id;
+
+                // Déterminer si on peut modifier/supprimer (pas de candidatures actives)
+                const canModify = nbCandidats === 0 || offre.statut_validation !== 'VALIDE';
+                const canDelete = nbCandidats === 0;
 
                 card.innerHTML = `
           <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             
             <div class="flex-1">
               <div class="flex items-center gap-3 mb-2">
-                <h3 class="text-xl font-bold text-gray-900">${offre.titre}</h3>
+                <h3 class="text-xl font-bold text-gray-900">${escapeHtml(offre.titre)}</h3>
                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getTypeBadgeClass(offre.type)}">
                   ${offre.type}
                 </span>
@@ -299,7 +421,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
-                  ${offre.localisation_ville}, ${offre.localisation_pays}
+                  ${escapeHtml(offre.localisation_ville || '')}, ${escapeHtml(offre.localisation_pays || '')}
                 </div>
                 <div class="flex items-center">
                    <svg class="w-4 h-4 mr-1.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -307,24 +429,51 @@
                   </svg>
                   Exp: ${formatDate(offre.date_expiration)}
                 </div>
+                <div class="flex items-center">
+                   <svg class="w-4 h-4 mr-1.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  ${offre.remuneration || 0}€/mois
+                </div>
               </div>
               
               ${offre.statut_validation === 'REFUSE' && offre.motif_refus ? `
-                 <p class="text-sm text-red-600 mt-2 font-medium">Motif refus: ${offre.motif_refus}</p>
+                 <p class="text-sm text-red-600 mt-2 font-medium">Motif refus: ${escapeHtml(offre.motif_refus)}</p>
               ` : ''}
             </div>
 
-            <div class="flex items-center gap-6 border-t lg:border-t-0 lg:border-l border-gray-100 pt-4 lg:pt-0 lg:pl-6">
-                <div class="text-center">
+            <div class="flex items-center gap-4 border-t lg:border-t-0 lg:border-l border-gray-100 pt-4 lg:pt-0 lg:pl-6">
+                <div class="text-center px-3">
                     <p class="text-xs text-gray-500 font-semibold uppercase tracking-wide">Candidats</p>
                     <p class="text-2xl font-bold ${nbCandidats > 0 ? 'text-primary-600' : 'text-gray-400'}">${nbCandidats}</p>
                 </div>
                 
-                <div>
-                     <a href="/entreprise/offres/${offre.id}/candidatures" 
-                        class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
+                <div class="flex items-center gap-2">
+                    <!-- Bouton Modifier -->
+                    <button onclick="openEditModal(${offreId})"
+                        class="inline-flex items-center p-2 text-gray-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition"
+                        title="Modifier l'offre">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                    </button>
+
+                    <!-- Bouton Supprimer -->
+                    <button onclick="confirmDelete(${offreId}, '${escapeHtml(offre.titre).replace(/'/g, "\\'")}', ${nbCandidats})"
+                        class="inline-flex items-center p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                        title="Supprimer l'offre">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                    </button>
+
+                    <!-- Bouton Gérer candidatures -->
+                    ${nbCandidats > 0 ? `
+                    <a href="/entreprise/offres/${offreId}/candidatures"
+                        class="inline-flex items-center px-3 py-1.5 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700 transition">
                         Gérer
-                     </a>
+                    </a>
+                    ` : ''}
                 </div>
             </div>
           </div>
@@ -389,6 +538,205 @@
 
         document.getElementById('logoutBtn').addEventListener('click', () => {
             Auth.logout('Vous avez été déconnecté.');
+        });
+
+        // ==================== ESCAPE HTML ====================
+        function escapeHtml(text) {
+            if (!text) return '';
+            return String(text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        // ==================== MODAL ÉDITION ====================
+        let currentEditOffre = null;
+
+        async function openEditModal(offreId) {
+            try {
+                const response = await fetch(`/api/entreprise/offres/${offreId}?userId=${userId}`);
+                const data = await response.json();
+
+                if (!data.ok) {
+                    showToast(data.error || 'Erreur lors du chargement de l\'offre', 'error');
+                    return;
+                }
+
+                currentEditOffre = data.offre;
+                const o = data.offre;
+
+                // Remplir le formulaire
+                document.getElementById('editOffreId').value = offreId;
+                document.getElementById('editType').value = o.type || 'STAGE';
+                document.getElementById('editTitre').value = o.titre || '';
+                document.getElementById('editDescription').value = o.description || '';
+                document.getElementById('editCompetences').value = o.competences || '';
+                document.getElementById('editPays').value = o.localisation_pays || '';
+                document.getElementById('editVille').value = o.localisation_ville || '';
+                document.getElementById('editDuree').value = o.duree_mois || '';
+                document.getElementById('editRemuneration').value = o.remuneration || '';
+                document.getElementById('editDateDebut').value = formatDateForInput(o.date_debut);
+                document.getElementById('editDateExpiration').value = formatDateForInput(o.date_expiration);
+
+                // Afficher le modal
+                document.getElementById('editModal').classList.remove('hidden');
+                document.getElementById('editModal').classList.add('flex');
+                document.getElementById('editError').classList.add('hidden');
+
+            } catch (error) {
+                console.error('Erreur:', error);
+                showToast('Erreur lors du chargement de l\'offre', 'error');
+            }
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.add('hidden');
+            document.getElementById('editModal').classList.remove('flex');
+            currentEditOffre = null;
+        }
+
+        function formatDateForInput(dateStr) {
+            if (!dateStr) return '';
+            const d = new Date(dateStr);
+            return d.toISOString().split('T')[0];
+        }
+
+        document.getElementById('editOffreForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const submitBtn = document.getElementById('editSubmitBtn');
+            const errorDiv = document.getElementById('editError');
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg><span>Enregistrement...</span>';
+            errorDiv.classList.add('hidden');
+
+            const offreId = document.getElementById('editOffreId').value;
+            const payload = {
+                userId,
+                type: document.getElementById('editType').value,
+                titre: document.getElementById('editTitre').value,
+                description: document.getElementById('editDescription').value,
+                competences: document.getElementById('editCompetences').value,
+                localisation_pays: document.getElementById('editPays').value,
+                localisation_ville: document.getElementById('editVille').value,
+                duree_mois: Number(document.getElementById('editDuree').value),
+                remuneration: Number(document.getElementById('editRemuneration').value),
+                date_debut: document.getElementById('editDateDebut').value,
+                date_expiration: document.getElementById('editDateExpiration').value,
+            };
+
+            try {
+                const response = await fetch(`/api/entreprise/offres/${offreId}?userId=${userId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                if (!data.ok) {
+                    errorDiv.textContent = data.error || 'Erreur lors de la modification';
+                    errorDiv.classList.remove('hidden');
+                    return;
+                }
+
+                closeEditModal();
+                showToast(data.message || 'Offre modifiée avec succès', 'success');
+
+                // Recharger les offres
+                await loadOffres();
+                await loadStats();
+
+            } catch (error) {
+                console.error('Erreur:', error);
+                errorDiv.textContent = 'Erreur technique lors de la modification';
+                errorDiv.classList.remove('hidden');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<span>Enregistrer</span>';
+            }
+        });
+
+        // ==================== MODAL SUPPRESSION ====================
+        function confirmDelete(offreId, titre, nbCandidats) {
+            if (nbCandidats > 0) {
+                showToast('Impossible de supprimer une offre avec des candidatures actives', 'error');
+                return;
+            }
+
+            document.getElementById('deleteOffreId').value = offreId;
+            document.getElementById('deleteModalText').textContent = `Êtes-vous sûr de vouloir supprimer l'offre "${titre}" ? Cette action est irréversible.`;
+
+            document.getElementById('deleteModal').classList.remove('hidden');
+            document.getElementById('deleteModal').classList.add('flex');
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').classList.add('hidden');
+            document.getElementById('deleteModal').classList.remove('flex');
+        }
+
+        async function deleteOffre() {
+            const offreId = document.getElementById('deleteOffreId').value;
+            const confirmBtn = document.getElementById('deleteConfirmBtn');
+
+            confirmBtn.disabled = true;
+            confirmBtn.textContent = 'Suppression...';
+
+            try {
+                const response = await fetch(`/api/entreprise/offres/${offreId}?userId=${userId}`, {
+                    method: 'DELETE'
+                });
+
+                const data = await response.json();
+
+                if (!data.ok) {
+                    showToast(data.error || 'Erreur lors de la suppression', 'error');
+                    return;
+                }
+
+                closeDeleteModal();
+                showToast('Offre supprimée avec succès', 'success');
+
+                // Supprimer visuellement la carte
+                const card = document.getElementById(`offre-${offreId}`);
+                if (card) {
+                    card.style.transition = 'opacity 0.3s, transform 0.3s';
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateX(20px)';
+                    setTimeout(() => card.remove(), 300);
+                }
+
+                // Recharger les stats
+                await loadStats();
+
+                // Vérifier s'il reste des offres
+                setTimeout(() => {
+                    const grid = document.getElementById('offresGrid');
+                    if (grid.children.length === 0) {
+                        grid.classList.add('hidden');
+                        document.getElementById('emptyState').classList.remove('hidden');
+                    }
+                }, 350);
+
+            } catch (error) {
+                console.error('Erreur:', error);
+                showToast('Erreur technique lors de la suppression', 'error');
+            } finally {
+                confirmBtn.disabled = false;
+                confirmBtn.textContent = 'Supprimer';
+            }
+        }
+
+        // Fermer les modals en cliquant à l'extérieur
+        document.getElementById('editModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('editModal')) closeEditModal();
+        });
+        document.getElementById('deleteModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('deleteModal')) closeDeleteModal();
         });
 
         // ==================== INIT ====================
