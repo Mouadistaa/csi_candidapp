@@ -11,12 +11,12 @@ import attestationRCRoutes from './routes/attestationRC';
 import entrepriseRoutes from './routes/entreprise';
 import etudiantRoutes from './routes/etudiant';
 import notificationRoutes from './routes/notifications';
-import adminRoutes from './routes/admin';
+import affectationRoutes from './routes/affectation';
 
 const app = express();
 const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
 
-app.use(express.json({limit: '10mb'}));
+app.use(express.json({ limit: '10mb' }));
 
 // API mount
 app.use('/api/utilisateurs', utilisateurRoutes);
@@ -29,7 +29,7 @@ app.use('/api/candidatures', candidatureRoutes);
 app.use('/api/entreprise', entrepriseRoutes);
 app.use('/api/etudiant', etudiantRoutes);
 app.use('/api/notifications', notificationRoutes);
-app.use('/api/admin', adminRoutes);
+app.use('/api/affectations', affectationRoutes);
 
 // --- ROUTES FRONTEND ---
 
@@ -70,6 +70,11 @@ app.get('/enseignant/referentiel', (_req, res) => {
     res.sendFile(path.join(__dirname, '..', '..', 'frontend', 'referentiel.html'));
 });
 
+// Route pour la validation des affectations
+app.get('/enseignant/affectations-en-attente', (_req, res) => {
+    res.sendFile(path.join(__dirname, '..', '..', 'frontend', 'enseignant-validations.html'));
+});
+
 app.get('/enseignant/archives', (_req, res) => {
     res.sendFile(path.join(__dirname, '..', '..', 'frontend', 'archives.html'));
 });
@@ -77,11 +82,6 @@ app.get('/enseignant/archives', (_req, res) => {
 // Routes Secrétaire
 app.get('/secretaire/dashboard', (_req, res) => {
     res.sendFile(path.join(__dirname, '..', '..', 'frontend', 'dashboard-secretaire.html'));
-});
-
-// Routes Admin
-app.get('/admin/dashboard', (_req, res) => {
-    res.sendFile(path.join(__dirname, '..', '..', 'frontend', 'dashboard-admin.html'));
 });
 
 app.get('/secretaire/validation-rc', (_req, res) => {
@@ -97,7 +97,7 @@ app.get('/attestation-rc', (_req, res) => {
 });
 
 app.get('/secretaire/profil', (_req, res) => {
-  res.sendFile(path.join(__dirname, '..', '..', 'frontend', 'profil-secretaire.html'));
+    res.sendFile(path.join(__dirname, '..', '..', 'frontend', 'profil-secretaire.html'));
 });
 
 // === AJOUTS POUR LE MODULE ENTREPRISE (C'EST ICI QUE CA MANQUAIT) ===
@@ -118,7 +118,7 @@ app.get('/create-offre', (_req, res) => {
 
 // 3. Route pour gérer les candidatures d'une offre (page Entreprise)
 app.get('/entreprise/offres/:id/candidatures', (_req, res) => {
-  res.sendFile(path.join(__dirname, '..', '..', 'frontend', 'entreprise-offre-candidatures.html'));
+    res.sendFile(path.join(__dirname, '..', '..', 'frontend', 'entreprise-offre-candidatures.html'));
 });
 
 // Serve frontend static files (CSS, JS, images, etc.)

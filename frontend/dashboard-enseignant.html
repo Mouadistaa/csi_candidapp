@@ -2,10 +2,8 @@
 <html lang="fr">
 
 <head>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width,initial-scale=1"/>
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Dashboard Enseignant - Candidapp</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -48,257 +46,267 @@
 
 <body class="bg-gray-50 min-h-screen">
 
-<!-- Header -->
-<header class="bg-white shadow-sm sticky top-0 z-50">
-    <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center h-16">
-            <!-- Logo -->
-            <a href="/" class="flex items-center space-x-2">
-                <div class="w-10 h-10 gradient-bg rounded-lg flex items-center justify-center">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-                    </svg>
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo -->
+                <a href="/enseignant/dashboard" class="flex items-center space-x-2">
+                    <div class="w-10 h-10 gradient-bg rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                        </svg>
+                    </div>
+                    <div>
+                        <span class="text-xl font-bold text-gray-900">Candidapp</span>
+                        <span class="text-xs text-primary-600 block font-medium">Espace Enseignant</span>
+                    </div>
+                </a>
+
+                <!-- Navigation -->
+                <div class="hidden md:flex items-center space-x-6">
+                    <a href="/enseignant/dashboard"
+                        class="text-primary-600 font-semibold border-b-2 border-primary-600 pb-1">Dashboard</a>
+                    <a href="/enseignant/referentiel"
+                        class="text-gray-600 hover:text-primary-600 transition">Référentiel
+                        Légal</a>
+                    <a href="/offres" class="text-gray-600 hover:text-primary-600 transition">Offres</a>
+                    <a href="/enseignant/archives" class="text-gray-600 hover:text-primary-600 transition">Archives</a>
                 </div>
-                <div>
-                    <span class="text-xl font-bold text-gray-900">Candidapp</span>
-                    <span class="text-xs text-primary-600 block font-medium">Espace Enseignant</span>
+
+                <!-- User Menu -->
+                <div class="flex items-center space-x-4">
+                    <!-- Notification Bell -->
+                    <div id="notificationBell" class="relative">
+                        <button onclick="toggleNotificationPanel()"
+                            class="relative p-2 text-gray-600 hover:text-primary-600 transition">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                            </svg>
+                            <span id="notifBadge"
+                                class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">0</span>
+                        </button>
+                        <div id="notifPanel"
+                            class="hidden absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-2xl border border-gray-100 z-50">
+                            <div class="p-4 border-b border-gray-100 flex justify-between items-center">
+                                <h3 class="font-semibold text-gray-900">Notifications</h3>
+                                <button onclick="markAllRead()"
+                                    class="text-sm text-primary-600 hover:text-primary-700 font-medium">Tout marquer
+                                    lu</button>
+                            </div>
+                            <div id="notifList" class="max-h-96 overflow-y-auto"></div>
+                            <div class="p-3 border-t border-gray-100 text-center">
+                                <a href="#" class="text-sm text-primary-600 hover:text-primary-700 font-medium">Voir
+                                    toutes les notifications</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="userBadge"
+                        class="hidden md:flex items-center space-x-2 bg-primary-50 px-3 py-1.5 rounded-full">
+                        <div class="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center">
+                            <span id="userInitial" class="text-white font-semibold text-sm"></span>
+                        </div>
+                        <span id="userEmailBadge"
+                            class="text-primary-700 font-medium text-sm max-w-[120px] truncate"></span>
+                    </div>
+                    <button id="btnModeSecretaire"
+                        class="hidden px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition">
+                        Mode secrétariat
+                    </button>
+                    <button id="logoutBtn"
+                        class="flex items-center space-x-2 text-gray-600 hover:text-red-600 font-medium transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                        <span class="hidden sm:inline">Déconnexion</span>
+                    </button>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Page Header -->
+    <section class="gradient-bg text-white py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h1 class="text-4xl font-bold mb-2">Dashboard de Modération</h1>
+            <p class="text-purple-200">Validez les offres et surveillez la conformité légale</p>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <!-- KPIs -->
+        <div class="grid md:grid-cols-3 gap-6 mb-8">
+            <!-- Offres à valider -->
+            <div class="bg-white rounded-xl shadow-sm p-6 card-hover">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600 mb-1">Offres à valider</p>
+                        <p id="kpiOffresAValider" class="text-3xl font-bold text-gray-900">-</p>
+                    </div>
+                    <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Affectations en attente -->
+            <a href="/enseignant/affectations-en-attente">
+                <div class="bg-white rounded-xl shadow-sm p-6 card-hover">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600 mb-1">Affectations en attente</p>
+                            <p id="kpiAffectations" class="text-3xl font-bold text-gray-900">-</p>
+                        </div>
+                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                        </div>
+                    </div>
                 </div>
             </a>
 
-            <!-- Navigation -->
-            <div class="hidden md:flex items-center space-x-6">
-                <a href="/enseignant/dashboard"
-                   class="text-primary-600 font-semibold border-b-2 border-primary-600 pb-1">Dashboard</a>
-                <a href="/enseignant/referentiel" class="text-gray-600 hover:text-primary-600 transition">Référentiel
-                    Légal</a>
-                <a href="/offres" class="text-gray-600 hover:text-primary-600 transition">Offres</a>
-                <a href="/enseignant/archives" class="text-gray-600 hover:text-primary-600 transition">Archives</a>
-            </div>
-
-            <!-- User Menu -->
-            <div class="flex items-center space-x-4">
-                <!-- Notification Bell -->
-                <div id="notificationBell" class="relative">
-                    <button onclick="toggleNotificationPanel()" class="relative p-2 text-gray-600 hover:text-primary-600 transition">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+            <!-- Alertes conformité -->
+            <div class="bg-white rounded-xl shadow-sm p-6 card-hover">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600 mb-1">Alertes conformité</p>
+                        <p id="kpiAlertes" class="text-3xl font-bold text-red-600">-</p>
+                    </div>
+                    <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                         </svg>
-                        <span id="notifBadge" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">0</span>
-                    </button>
-                    <div id="notifPanel" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-2xl border border-gray-100 z-50">
-                        <div class="p-4 border-b border-gray-100 flex justify-between items-center">
-                            <h3 class="font-semibold text-gray-900">Notifications</h3>
-                            <button onclick="markAllRead()" class="text-sm text-primary-600 hover:text-primary-700 font-medium">Tout marquer lu</button>
-                        </div>
-                        <div id="notifList" class="max-h-96 overflow-y-auto"></div>
-                        <div class="p-3 border-t border-gray-100 text-center">
-                            <a href="#" class="text-sm text-primary-600 hover:text-primary-700 font-medium">Voir toutes les notifications</a>
-                        </div>
                     </div>
                 </div>
-
-                <div id="userBadge"
-                     class="hidden md:flex items-center space-x-2 bg-primary-50 px-3 py-1.5 rounded-full">
-                    <div class="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center">
-                        <span id="userInitial" class="text-white font-semibold text-sm"></span>
-                    </div>
-                    <span id="userEmailBadge"
-                          class="text-primary-700 font-medium text-sm max-w-[120px] truncate"></span>
-                </div>
-                <button id="btnModeSecretaire"
-                    class="hidden px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition">
-                        Mode secrétariat
-                </button>
-                <button id="logoutBtn"
-                        class="flex items-center space-x-2 text-gray-600 hover:text-red-600 font-medium transition">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                    </svg>
-                    <span class="hidden sm:inline">Déconnexion</span>
-                </button>
-            </div>
-        </div>
-    </nav>
-</header>
-
-<!-- Page Header -->
-<section class="gradient-bg text-white py-12">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 class="text-4xl font-bold mb-2">Dashboard de Modération</h1>
-        <p class="text-purple-200">Validez les offres et surveillez la conformité légale</p>
-    </div>
-</section>
-
-<!-- Main Content -->
-<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-
-    <!-- KPIs -->
-    <div class="grid md:grid-cols-3 gap-6 mb-8">
-        <!-- Offres à valider -->
-        <div class="bg-white rounded-xl shadow-sm p-6 card-hover">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-medium text-gray-600 mb-1">Offres à valider</p>
-                    <p id="kpiOffresAValider" class="text-3xl font-bold text-gray-900">-</p>
-                </div>
-                <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                    <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                </div>
             </div>
         </div>
 
-        <!-- Affectations en attente -->
-        <div class="bg-white rounded-xl shadow-sm p-6 card-hover">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-medium text-gray-600 mb-1">Affectations en attente</p>
-                    <p id="kpiAffectations" class="text-3xl font-bold text-gray-900">-</p>
-                </div>
-                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-                    </svg>
-                </div>
+        <!-- Section Title -->
+        <div class="mb-6">
+            <h2 class="text-2xl font-bold text-gray-900">Offres à modérer</h2>
+            <p class="text-gray-600">Validez ou refusez les offres selon leur conformité légale</p>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="bg-white rounded-xl shadow-sm p-8">
+            <div class="flex flex-col items-center justify-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mb-4"></div>
+                <p class="text-gray-600">Chargement des offres...</p>
             </div>
         </div>
 
-        <!-- Alertes conformité -->
-        <div class="bg-white rounded-xl shadow-sm p-6 card-hover">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-medium text-gray-600 mb-1">Alertes conformité</p>
-                    <p id="kpiAlertes" class="text-3xl font-bold text-red-600">-</p>
-                </div>
-                <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-                    <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                    </svg>
-                </div>
+        <!-- Empty State -->
+        <div id="emptyState" class="hidden bg-white rounded-xl shadow-sm p-12">
+            <div class="text-center">
+                <svg class="w-24 h-24 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">Toutes les offres sont traitées</h3>
+                <p class="text-gray-600">Aucune offre en attente de modération pour le moment.</p>
             </div>
         </div>
-    </div>
 
-    <!-- Section Title -->
-    <div class="mb-6">
-        <h2 class="text-2xl font-bold text-gray-900">Offres à modérer</h2>
-        <p class="text-gray-600">Validez ou refusez les offres selon leur conformité légale</p>
-    </div>
-
-    <!-- Loading State -->
-    <div id="loadingState" class="bg-white rounded-xl shadow-sm p-8">
-        <div class="flex flex-col items-center justify-center">
-            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mb-4"></div>
-            <p class="text-gray-600">Chargement des offres...</p>
+        <!-- Offres Grid -->
+        <div id="offresGrid" class="hidden space-y-4">
+            <!-- Populated by JS -->
         </div>
-    </div>
 
-    <!-- Empty State -->
-    <div id="emptyState" class="hidden bg-white rounded-xl shadow-sm p-12">
-        <div class="text-center">
-            <svg class="w-24 h-24 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-            <h3 class="text-xl font-semibold text-gray-900 mb-2">Toutes les offres sont traitées</h3>
-            <p class="text-gray-600">Aucune offre en attente de modération pour le moment.</p>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-6 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-400 text-sm">
+            <p>&copy; 2026 Candidapp. Tous droits réservés.</p>
         </div>
-    </div>
+    </footer>
 
-    <!-- Offres Grid -->
-    <div id="offresGrid" class="hidden space-y-4">
-        <!-- Populated by JS -->
-    </div>
+    <script>
+        // ==================== LOAD STATS ====================
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/enseignant/stats');
+                const data = await response.json();
 
-</main>
+                if (data.ok) {
+                    const s = data.stats || {};
+                    document.getElementById('kpiOffresAValider').textContent = s.nb_offres_a_valider ?? s.offres_a_valider ?? 0;
+                    document.getElementById('kpiAffectations').textContent = s.nb_affectations_a_valider ?? s.affectations_en_attente ?? 0;
+                    document.getElementById('kpiAlertes').textContent = s.nb_alertes_conformite ?? s.alertes_conformite ?? 0;
+                }
 
-<!-- Footer -->
-<footer class="bg-gray-900 text-white py-6 mt-12">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-400 text-sm">
-        <p>&copy; 2026 Candidapp. Tous droits réservés.</p>
-    </div>
-</footer>
-
-<script>
-    // ==================== LOAD STATS ====================
-    async function loadStats() {
-        try {
-            const response = await fetch('/api/enseignant/stats');
-            const data = await response.json();
-
-            if (data.ok) {
-                const s = data.stats || {};
-                document.getElementById('kpiOffresAValider').textContent = s.nb_offres_a_valider ?? s.offres_a_valider ?? 0;
-                document.getElementById('kpiAffectations').textContent = s.nb_affectations_a_valider ?? s.affectations_en_attente ?? 0;
-                document.getElementById('kpiAlertes').textContent = s.nb_alertes_conformite ?? s.alertes_conformite ?? 0;
+            } catch (error) {
+                console.error('Erreur stats:', error);
             }
-
-        } catch (error) {
-            console.error('Erreur stats:', error);
         }
-    }
 
-    // ==================== LOAD OFFRES ====================
-    async function loadOffres() {
-        try {
-            const response = await fetch('/api/enseignant/offres-conformite');
-            const data = await response.json();
+        // ==================== LOAD OFFRES ====================
+        async function loadOffres() {
+            try {
+                const response = await fetch('/api/enseignant/offres-conformite');
+                const data = await response.json();
 
-            document.getElementById('loadingState').classList.add('hidden');
+                document.getElementById('loadingState').classList.add('hidden');
 
-            if (!data.ok || !Array.isArray(data.offres)) {
-                document.getElementById('emptyState').classList.remove('hidden');
-                return;
+                if (!data.ok || !Array.isArray(data.offres)) {
+                    document.getElementById('emptyState').classList.remove('hidden');
+                    return;
+                }
+
+                // ✅ On ne modère que les offres EN_ATTENTE
+                const offresAValider = data.offres.filter(o => o.statut_validation === 'EN_ATTENTE');
+
+                if (offresAValider.length === 0) {
+                    document.getElementById('emptyState').classList.remove('hidden');
+                    document.getElementById('offresGrid').classList.add('hidden');
+                    return;
+                }
+
+                displayOffres(offresAValider);
+            } catch (error) {
+                console.error('Erreur:', error);
+                document.getElementById('loadingState').classList.add('hidden');
+                showToast('Erreur lors du chargement des offres', 'error');
             }
-
-            // ✅ On ne modère que les offres EN_ATTENTE
-            const offresAValider = data.offres.filter(o => o.statut_validation === 'EN_ATTENTE');
-
-            if (offresAValider.length === 0) {
-                document.getElementById('emptyState').classList.remove('hidden');
-                document.getElementById('offresGrid').classList.add('hidden');
-                return;
-            }
-
-            displayOffres(offresAValider);
-        } catch (error) {
-            console.error('Erreur:', error);
-            document.getElementById('loadingState').classList.add('hidden');
-            showToast('Erreur lors du chargement des offres', 'error');
         }
-    }
 
 
-    function displayOffres(offres) {
-        const grid = document.getElementById('offresGrid');
-        grid.innerHTML = '';
+        function displayOffres(offres) {
+            const grid = document.getElementById('offresGrid');
+            grid.innerHTML = '';
 
-        offres.forEach(offre => {
-            const isNonConforme = offre.est_conforme === false;
-            const cardClass = isNonConforme ? 'bg-red-50 border-2 border-red-200' : 'bg-white';
+            offres.forEach(offre => {
+                const isNonConforme = offre.est_conforme === false;
+                const cardClass = isNonConforme ? 'bg-red-50 border-2 border-red-200' : 'bg-white';
 
-            const offreId = offre.offre_id ?? offre.id; // sécurité
-            const entrepriseNom = offre.raison_sociale ?? offre.entreprise_nom ?? '-';
+                const offreId = offre.offre_id ?? offre.id; // sécurité
+                const entrepriseNom = offre.raison_sociale ?? offre.entreprise_nom ?? '-';
 
-            const typeOffre = offre.type ?? offre.type_offre ?? '-';
-            const remuneration = offre.offre_remuneration ?? offre.remuneration ?? null;
+                const typeOffre = offre.type ?? offre.type_offre ?? '-';
+                const remuneration = offre.offre_remuneration ?? offre.remuneration ?? null;
 
-            const ville = offre.localisation_ville ?? '-';
-            const pays = offre.localisation_pays ?? '-';
+                const ville = offre.localisation_ville ?? '-';
+                const pays = offre.localisation_pays ?? '-';
 
-            const dateSoumission = offre.date_soumission ?? offre.date_creation ?? null;
+                const dateSoumission = offre.date_soumission ?? offre.date_creation ?? null;
 
-            const card = document.createElement('div');
-            card.className = `${cardClass} rounded-xl shadow-sm p-6 card-hover`;
-            card.dataset.offreId = offreId;
+                const card = document.createElement('div');
+                card.className = `${cardClass} rounded-xl shadow-sm p-6 card-hover`;
+                card.dataset.offreId = offreId;
 
-            card.innerHTML = `
+                card.innerHTML = `
       <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
         <!-- Main Info -->
         <div class="flex-1">
@@ -385,140 +393,137 @@
       </div>
     `;
 
-            grid.appendChild(card);
-        });
-
-        grid.classList.remove('hidden');
-    }
-
-
-    // ==================== REVIEW OFFRE ====================
-    async function reviewOffre(offreId, action, cardElement) {
-        const btnValider = cardElement.querySelector('.btn-valider');
-        const btnRefuser = cardElement.querySelector('.btn-refuser');
-
-        if (btnValider) btnValider.disabled = true;
-        if (btnRefuser) btnRefuser.disabled = true;
-
-        try {
-            const response = await fetch(`/api/enseignant/offres/${offreId}/review`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action })
+                grid.appendChild(card);
             });
 
-            const data = await response.json();
+            grid.classList.remove('hidden');
+        }
 
-            if (response.ok && (data.ok ?? true)) {
-                showToast(data.message || 'Offre mise à jour', 'success');
-                loadStats();
-                loadOffres();
-            } else {
-                showToast(data.error || 'Erreur lors de la modération', 'error');
+
+        // ==================== REVIEW OFFRE ====================
+        async function reviewOffre(offreId, action, cardElement) {
+            const btnValider = cardElement.querySelector('.btn-valider');
+            const btnRefuser = cardElement.querySelector('.btn-refuser');
+
+            if (btnValider) btnValider.disabled = true;
+            if (btnRefuser) btnRefuser.disabled = true;
+
+            try {
+                const response = await fetch(`/api/enseignant/offres/${offreId}/review`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && (data.ok ?? true)) {
+                    showToast(data.message || 'Offre mise à jour', 'success');
+                    loadStats();
+                    loadOffres();
+                } else {
+                    showToast(data.error || 'Erreur lors de la modération', 'error');
+                    if (btnValider) btnValider.disabled = false;
+                    if (btnRefuser) btnRefuser.disabled = false;
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                showToast('Erreur technique', 'error');
                 if (btnValider) btnValider.disabled = false;
                 if (btnRefuser) btnRefuser.disabled = false;
             }
-        } catch (error) {
-            console.error('Erreur:', error);
-            showToast('Erreur technique', 'error');
-            if (btnValider) btnValider.disabled = false;
-            if (btnRefuser) btnRefuser.disabled = false;
         }
-    }
 
-    // ==================== HELPERS ====================
-    function formatDate(dateString) {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('fr-FR', {
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric'
-        });
-    }
+        // ==================== HELPERS ====================
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('fr-FR', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            });
+        }
 
-    function getTypeBadgeClass(type) {
-        const classes = {
-            'STAGE': 'bg-blue-100 text-blue-800',
-            'ALTERNANCE': 'bg-yellow-100 text-yellow-800',
-            'CDD': 'bg-purple-100 text-purple-800'
-        };
-        return classes[type] || 'bg-gray-100 text-gray-800';
-    }
+        function getTypeBadgeClass(type) {
+            const classes = {
+                'STAGE': 'bg-blue-100 text-blue-800',
+                'ALTERNANCE': 'bg-yellow-100 text-yellow-800',
+                'CDD': 'bg-purple-100 text-purple-800'
+            };
+            return classes[type] || 'bg-gray-100 text-gray-800';
+        }
 
-    function getStatutBadgeClass(statut) {
-        const classes = {
-            'VALIDEE': 'bg-green-100 text-green-800 border-green-200',
-            'REJETEE': 'bg-red-100 text-red-800 border-red-200',
-            'EN_ATTENTE': 'bg-yellow-100 text-yellow-800 border-yellow-200'
-        };
-        return classes[statut] || 'bg-gray-100 text-gray-800 border-gray-200';
-    }
+        function getStatutBadgeClass(statut) {
+            const classes = {
+                'VALIDEE': 'bg-green-100 text-green-800 border-green-200',
+                'REJETEE': 'bg-red-100 text-red-800 border-red-200',
+                'EN_ATTENTE': 'bg-yellow-100 text-yellow-800 border-yellow-200'
+            };
+            return classes[statut] || 'bg-gray-100 text-gray-800 border-gray-200';
+        }
 
-    function showToast(message, type = 'success') {
-        const bgColor = type === 'success' ? 'bg-green-600' : 'bg-red-600';
-        const toast = document.createElement('div');
-        toast.className = `fixed top-24 right-4 ${bgColor} text-white px-6 py-4 rounded-lg shadow-lg flex items-center space-x-3 z-50`;
-        toast.innerHTML = `
+        function showToast(message, type = 'success') {
+            const bgColor = type === 'success' ? 'bg-green-600' : 'bg-red-600';
+            const toast = document.createElement('div');
+            toast.className = `fixed top-24 right-4 ${bgColor} text-white px-6 py-4 rounded-lg shadow-lg flex items-center space-x-3 z-50`;
+            toast.innerHTML = `
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${type === 'success' ? 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' : 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'}" />
         </svg>
         <span class="font-semibold">${message}</span>
       `;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 3000);
-    }
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
 
-    // ==================== EVENT LISTENERS ====================
-    document.getElementById('logoutBtn').addEventListener('click', () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        sessionStorage.removeItem('token');
-        sessionStorage.removeItem('user');
-        window.location.href = '/login';
-    });
-
-    // ==================== AUTH ====================
-    function initAuth() {
-        const user = JSON.parse(sessionStorage.getItem('user') || 'null');
-        if (!user || user.role !== 'ENSEIGNANT') {
+        // ==================== EVENT LISTENERS ====================
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            sessionStorage.removeItem('user');
             window.location.href = '/login';
-            return;
-        }
-        const initial = (user.email || '?').charAt(0).toUpperCase();
-        document.getElementById('userInitial').textContent = initial;
-        document.getElementById('userEmailBadge').textContent = user.email;
-        document.getElementById('userBadge').classList.remove('hidden');
-    }
-
-    // ==================== INIT ====================
-    initAuth();
-    loadStats();
-    loadOffres();
-
-    // ==================== CHECK DELEGATION SECRETAIRE ====================
-    async function checkDelegationSecretaire() {
-    const user = JSON.parse(sessionStorage.getItem('user') || 'null');
-    if (!user?.id) return;
-
-    try {
-        const r = await fetch(`/api/enseignant/delegation/secretaire?userId=${user.id}`);
-        const data = await r.json();
-
-        const btn = document.getElementById('btnModeSecretaire');
-        if (data.ok && data.active) {
-        btn.classList.remove('hidden');
-        btn.addEventListener('click', () => {
-            window.location.href = '/secretaire/dashboard';
         });
-        }
-    } catch (e) {
-        console.error(e);
-    }
-    }
 
-    checkDelegationSecretaire();
-</script>
-<script src="/js/notifications.js"></script>
+        // ==================== AUTH ====================
+        function initAuth() {
+            const user = JSON.parse(sessionStorage.getItem('user') || 'null');
+            if (!user || user.role !== 'ENSEIGNANT') {
+                window.location.href = '/login';
+                return;
+            }
+            const initial = (user.email || '?').charAt(0).toUpperCase();
+            document.getElementById('userInitial').textContent = initial;
+            document.getElementById('userEmailBadge').textContent = user.email;
+            document.getElementById('userBadge').classList.remove('hidden');
+        }
+
+        // ==================== INIT ====================
+        initAuth();
+        loadStats();
+        loadOffres();
+
+        // ==================== CHECK DELEGATION SECRETAIRE ====================
+        async function checkDelegationSecretaire() {
+            const user = JSON.parse(sessionStorage.getItem('user') || 'null');
+            if (!user?.id) return;
+
+            try {
+                const r = await fetch(`/api/enseignant/delegation/secretaire?userId=${user.id}`);
+                const data = await r.json();
+
+                const btn = document.getElementById('btnModeSecretaire');
+                if (data.ok && data.active) {
+                    btn.classList.remove('hidden');
+                    btn.addEventListener('click', () => {
+                        window.location.href = '/secretaire/dashboard';
+                    });
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        checkDelegationSecretaire();
+    </script>
+    <script src="/js/notifications.js"></script>
 
 </body>
 

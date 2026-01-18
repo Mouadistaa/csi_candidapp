@@ -2,10 +2,8 @@
 <html lang="fr">
 
 <head>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width,initial-scale=1"/>
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Mon Profil - Candidapp</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -48,416 +46,442 @@
 
 <body class="bg-gray-50 min-h-screen">
 
-<!-- Header -->
-<header class="bg-white shadow-sm sticky top-0 z-50">
-    <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center h-16">
-            <!-- Logo -->
-            <a href="/" class="flex items-center space-x-2">
-                <div class="w-10 h-10 gradient-bg rounded-lg flex items-center justify-center">
-                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                    </svg>
-                </div>
-                <span class="text-xl font-bold text-gray-900">Candidapp</span>
-            </a>
-
-            <!-- Navigation -->
-            <div class="hidden md:flex items-center space-x-6">
-                <a href="/" class="text-gray-600 hover:text-primary-600 transition">Accueil</a>
-                <a href="/profile" class="text-primary-600 font-semibold border-b-2 border-primary-600 pb-1">Mon profil</a>
-                <a href="/offres" class="text-gray-600 hover:text-primary-600 transition">Offres</a>
-                <a href="/candidatures" class="text-gray-600 hover:text-primary-600 transition">Mes candidatures</a>
-            </div>
-
-            <!-- User Menu -->
-            <div class="flex items-center space-x-4">
-                <!-- Notification Bell -->
-                <div id="notificationBell" class="relative">
-                    <button onclick="toggleNotificationPanel()" class="relative p-2 text-gray-600 hover:text-primary-600 transition">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo -->
+                <a href="/" class="flex items-center space-x-2">
+                    <div class="w-10 h-10 gradient-bg rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
-                        <span id="notifBadge" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">0</span>
-                    </button>
-                    <div id="notifPanel" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-2xl border border-gray-100 z-50">
-                        <div class="p-4 border-b border-gray-100 flex justify-between items-center">
-                            <h3 class="font-semibold text-gray-900">Notifications</h3>
-                            <button onclick="markAllRead()" class="text-sm text-primary-600 hover:text-primary-700 font-medium">Tout marquer lu</button>
-                        </div>
-                        <div id="notifList" class="max-h-96 overflow-y-auto"></div>
-                        <div class="p-3 border-t border-gray-100 text-center">
-                            <a href="#" class="text-sm text-primary-600 hover:text-primary-700 font-medium">Voir toutes les notifications</a>
-                        </div>
                     </div>
+                    <span class="text-xl font-bold text-gray-900">Candidapp</span>
+                </a>
+
+                <!-- Navigation -->
+                <div class="hidden md:flex items-center space-x-6">
+                    <a href="/" class="text-gray-600 hover:text-primary-600 transition">Accueil</a>
+                    <a href="/profile" class="text-primary-600 font-semibold border-b-2 border-primary-600 pb-1">Mon
+                        profil</a>
+                    <a href="/offres" class="text-gray-600 hover:text-primary-600 transition">Offres</a>
+                    <a href="/candidatures" class="text-gray-600 hover:text-primary-600 transition">Mes candidatures</a>
                 </div>
 
-                <div id="userBadge"
-                     class="hidden md:flex items-center space-x-2 bg-primary-50 px-3 py-1.5 rounded-full">
-                    <div class="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center">
-                        <span id="userInitial" class="text-white font-semibold text-sm"></span>
-                    </div>
-                    <span id="userEmailBadge" class="text-primary-700 font-medium text-sm max-w-[120px] truncate"></span>
-                </div>
-                <button id="logout"
-                        class="flex items-center space-x-2 text-gray-600 hover:text-red-600 font-medium transition">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                    </svg>
-                    <span class="hidden sm:inline">Déconnexion</span>
-                </button>
-            </div>
-        </div>
-    </nav>
-</header>
-
-<!-- Profile Hero -->
-<section class="gradient-bg text-white py-12">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex items-center space-x-6">
-            <div class="w-24 h-24 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
-                <span id="avatarInitial" class="text-4xl font-bold text-white"></span>
-            </div>
-            <div>
-                <h1 id="welcomeTitle" class="text-3xl font-bold mb-1">Bienvenue</h1>
-                <p id="userEmailHero" class="text-purple-200"></p>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Main Content -->
-<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <div class="grid lg:grid-cols-3 gap-8">
-
-        <!-- Profile Card -->
-        <div class="lg:col-span-1">
-            <div class="bg-white rounded-2xl shadow-lg p-6 card-hover">
-                <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                    <svg class="w-5 h-5 text-primary-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                    </svg>
-                    Informations du profil
-                </h2>
-                <div class="space-y-4">
-                    <div class="flex items-center p-3 bg-gray-50 rounded-lg">
-                        <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"/>
-                        </svg>
-                        <div>
-                            <p class="text-xs text-gray-500">ID Utilisateur</p>
-                            <p id="userId" class="font-medium text-gray-900"></p>
-                        </div>
-                    </div>
-                    <div class="flex items-center p-3 bg-gray-50 rounded-lg">
-                        <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"/>
-                        </svg>
-                        <div>
-                            <p class="text-xs text-gray-500">Email</p>
-                            <p id="userEmail" class="font-medium text-gray-900"></p>
-                        </div>
-                    </div>
-                    <div class="flex items-center p-3 bg-gray-50 rounded-lg">
-                        <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-                        </svg>
-                        <div>
-                            <p class="text-xs text-gray-500">Statut</p>
-                            <p class="font-medium text-green-600">Actif</p>
-                        </div>
-                    </div>
-
-                    <!-- Statut de recherche -->
-                    <div id="rechercheSection" class="hidden flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div class="flex items-center">
-                            <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <!-- User Menu -->
+                <div class="flex items-center space-x-4">
+                    <!-- Notification Bell -->
+                    <div id="notificationBell" class="relative">
+                        <button onclick="toggleNotificationPanel()"
+                            class="relative p-2 text-gray-600 hover:text-primary-600 transition">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                            </svg>
+                            <span id="notifBadge"
+                                class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">0</span>
+                        </button>
+                        <div id="notifPanel"
+                            class="hidden absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-2xl border border-gray-100 z-50">
+                            <div class="p-4 border-b border-gray-100 flex justify-between items-center">
+                                <h3 class="font-semibold text-gray-900">Notifications</h3>
+                                <button onclick="markAllRead()"
+                                    class="text-sm text-primary-600 hover:text-primary-700 font-medium">Tout marquer
+                                    lu</button>
+                            </div>
+                            <div id="notifList" class="max-h-96 overflow-y-auto"></div>
+                            <div class="p-3 border-t border-gray-100 text-center">
+                                <a href="#" class="text-sm text-primary-600 hover:text-primary-700 font-medium">Voir
+                                    toutes les notifications</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="userBadge"
+                        class="hidden md:flex items-center space-x-2 bg-primary-50 px-3 py-1.5 rounded-full">
+                        <div class="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center">
+                            <span id="userInitial" class="text-white font-semibold text-sm"></span>
+                        </div>
+                        <span id="userEmailBadge"
+                            class="text-primary-700 font-medium text-sm max-w-[120px] truncate"></span>
+                    </div>
+                    <button id="logout"
+                        class="flex items-center space-x-2 text-gray-600 hover:text-red-600 font-medium transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                        <span class="hidden sm:inline">Déconnexion</span>
+                    </button>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Profile Hero -->
+    <section class="gradient-bg text-white py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center space-x-6">
+                <div class="w-24 h-24 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                    <span id="avatarInitial" class="text-4xl font-bold text-white"></span>
+                </div>
+                <div>
+                    <h1 id="welcomeTitle" class="text-3xl font-bold mb-1">Bienvenue</h1>
+                    <p id="userEmailHero" class="text-purple-200"></p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="grid lg:grid-cols-3 gap-8">
+
+            <!-- Profile Card -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-2xl shadow-lg p-6 card-hover">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <svg class="w-5 h-5 text-primary-600 mr-2" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        Informations du profil
+                    </h2>
+                    <div class="space-y-4">
+                        <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                            <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
                             </svg>
                             <div>
-                                <p class="text-xs text-gray-500">Recherche d'emploi</p>
-                                <p id="rechercheStatus" class="font-medium text-gray-600">-</p>
+                                <p class="text-xs text-gray-500">ID Utilisateur</p>
+                                <p id="userId" class="font-medium text-gray-900"></p>
                             </div>
                         </div>
-                        <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" id="rechercheToggle" class="sr-only peer">
-                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
-                        </label>
-                    </div>
+                        <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                            <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                            </svg>
+                            <div>
+                                <p class="text-xs text-gray-500">Email</p>
+                                <p id="userEmail" class="font-medium text-gray-900"></p>
+                            </div>
+                        </div>
+                        <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                            <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                            </svg>
+                            <div>
+                                <p class="text-xs text-gray-500">Statut</p>
+                                <p class="font-medium text-green-600">Actif</p>
+                            </div>
+                        </div>
 
-                    <!-- CV -->
-                    <div id="cvSection" class="hidden p-3 bg-gray-50 rounded-lg">
-                        <div class="flex items-center justify-between mb-3">
+                        <!-- Statut de recherche -->
+                        <div id="rechercheSection"
+                            class="hidden flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                             <div class="flex items-center">
-                                <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                        d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                 </svg>
                                 <div>
-                                    <p class="text-xs text-gray-500">CV</p>
-                                    <p id="cvStatus" class="font-medium text-gray-600">Non déposé</p>
+                                    <p class="text-xs text-gray-500">Recherche d'emploi</p>
+                                    <p id="rechercheStatus" class="font-medium text-gray-600">-</p>
                                 </div>
                             </div>
-                            <button id="viewCvBtn" class="hidden text-primary-600 hover:text-primary-700 text-sm font-medium">
-                                Voir
-                            </button>
-                        </div>
-                        <div class="flex gap-2">
-                            <label class="flex-1 cursor-pointer">
-                                <input type="file" id="cvInput" accept="application/pdf" class="hidden">
-                                <span class="block w-full text-center py-2 px-3 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg transition">
-                                    Déposer un CV
-                                </span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="rechercheToggle" class="sr-only peer">
+                                <div
+                                    class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600">
+                                </div>
                             </label>
-                            <button id="deleteCvBtn" class="hidden py-2 px-3 bg-red-100 hover:bg-red-200 text-red-600 text-sm font-medium rounded-lg transition">
-                                Supprimer
-                            </button>
                         </div>
-                        <p class="text-xs text-gray-500 mt-2">Format PDF, max 5MB</p>
+
+                        <!-- CV -->
+                        <div id="cvSection" class="hidden p-3 bg-gray-50 rounded-lg">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center">
+                                    <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    <div>
+                                        <p class="text-xs text-gray-500">CV</p>
+                                        <p id="cvStatus" class="font-medium text-gray-600">Non déposé</p>
+                                    </div>
+                                </div>
+                                <button id="viewCvBtn"
+                                    class="hidden text-primary-600 hover:text-primary-700 text-sm font-medium">
+                                    Voir
+                                </button>
+                            </div>
+                            <div class="flex gap-2">
+                                <label class="flex-1 cursor-pointer">
+                                    <input type="file" id="cvInput" accept="application/pdf" class="hidden">
+                                    <span
+                                        class="block w-full text-center py-2 px-3 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg transition">
+                                        Déposer un CV
+                                    </span>
+                                </label>
+                                <button id="deleteCvBtn"
+                                    class="hidden py-2 px-3 bg-red-100 hover:bg-red-200 text-red-600 text-sm font-medium rounded-lg transition">
+                                    Supprimer
+                                </button>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-2">Format PDF, max 5MB</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="lg:col-span-2">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Actions rapides</h2>
+                <div class="grid sm:grid-cols-2 gap-4">
+                    <a href="/candidatures"
+                        class="card-hover bg-white rounded-xl p-6 shadow-lg flex items-start space-x-4">
+                        <div class="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <svg class="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-gray-900">Mes candidatures</h3>
+                            <p class="text-gray-600 text-sm mt-1">Voir et gérer toutes vos candidatures</p>
+                        </div>
+                    </a>
+
+                    <a href="/candidatures/nouvelle"
+                        class="card-hover bg-white rounded-xl p-6 shadow-lg flex items-start space-x-4">
+                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-gray-900">Nouvelle candidature</h3>
+                            <p class="text-gray-600 text-sm mt-1">Ajouter une nouvelle candidature</p>
+                        </div>
+                    </a>
+
+                    <a href="/offres" class="card-hover bg-white rounded-xl p-6 shadow-lg flex items-start space-x-4">
+                        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-gray-900">Offres disponibles</h3>
+                            <p class="text-gray-600 text-sm mt-1">Parcourir les offres de stage</p>
+                        </div>
+                    </a>
+
+                    <!-- Carte Attestation RC -->
+                    <a href="/attestation-rc"
+                        class="card-hover bg-white rounded-xl p-6 shadow-lg flex items-start space-x-4 relative overflow-hidden">
+
+                        <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                        </div>
+
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between gap-3">
+                                <h3 class="font-semibold text-gray-900">Attestation RC</h3>
+
+                                <!-- Badge statut -->
+                                <span id="badgeRc" class="hidden text-xs font-semibold px-2.5 py-1 rounded-full border">
+                                    —
+                                </span>
+                            </div>
+
+                            <p class="text-gray-600 text-sm mt-1">
+                                Déposer ton PDF et suivre la validation.
+                            </p>
+                        </div>
+                    </a>
+
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="mt-8">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Activité récente</h2>
+
+                    <!-- Loading State -->
+                    <div id="candidaturesLoading" class="bg-white rounded-2xl shadow-lg p-6">
+                        <div class="flex items-center justify-center space-x-3">
+                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+                            <p class="text-gray-600">Chargement de vos candidatures...</p>
+                        </div>
+                    </div>
+
+                    <!-- Empty State -->
+                    <div id="candidaturesEmpty" class="hidden bg-white rounded-2xl shadow-lg overflow-hidden">
+                        <div class="p-6 text-center text-gray-500">
+                            <svg class="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                            </svg>
+                            <p>Aucune activité récente</p>
+                            <a href="/offres"
+                                class="inline-block mt-3 text-primary-600 hover:text-primary-700 font-medium">Découvrir
+                                les offres disponibles →</a>
+                        </div>
+                    </div>
+
+                    <!-- Candidatures List -->
+                    <div id="candidaturesList"
+                        class="hidden bg-white rounded-2xl shadow-lg overflow-hidden divide-y divide-gray-100">
+                        <!-- Will be populated dynamically -->
                     </div>
                 </div>
             </div>
         </div>
+    </main>
 
-        <!-- Quick Actions -->
-        <div class="lg:col-span-2">
-            <h2 class="text-lg font-semibold text-gray-900 mb-4">Actions rapides</h2>
-            <div class="grid sm:grid-cols-2 gap-4">
-                <a href="/candidatures" class="card-hover bg-white rounded-xl p-6 shadow-lg flex items-start space-x-4">
-                    <div class="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <svg class="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <h3 class="font-semibold text-gray-900">Mes candidatures</h3>
-                        <p class="text-gray-600 text-sm mt-1">Voir et gérer toutes vos candidatures</p>
-                    </div>
-                </a>
-
-                <a href="/candidatures/nouvelle"
-                   class="card-hover bg-white rounded-xl p-6 shadow-lg flex items-start space-x-4">
-                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <h3 class="font-semibold text-gray-900">Nouvelle candidature</h3>
-                        <p class="text-gray-600 text-sm mt-1">Ajouter une nouvelle candidature</p>
-                    </div>
-                </a>
-
-                <a href="/offres" class="card-hover bg-white rounded-xl p-6 shadow-lg flex items-start space-x-4">
-                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <h3 class="font-semibold text-gray-900">Offres disponibles</h3>
-                        <p class="text-gray-600 text-sm mt-1">Parcourir les offres de stage</p>
-                    </div>
-                </a>
-
-                <!-- Carte Attestation RC -->
-                <a href="/attestation-rc"
-                   class="card-hover bg-white rounded-xl p-6 shadow-lg flex items-start space-x-4 relative overflow-hidden">
-
-                    <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                        </svg>
-                    </div>
-
-                    <div class="flex-1">
-                        <div class="flex items-center justify-between gap-3">
-                            <h3 class="font-semibold text-gray-900">Attestation RC</h3>
-
-                            <!-- Badge statut -->
-                            <span id="badgeRc"
-                                  class="hidden text-xs font-semibold px-2.5 py-1 rounded-full border">
-        —
-      </span>
-                        </div>
-
-                        <p class="text-gray-600 text-sm mt-1">
-                            Déposer ton PDF et suivre la validation.
-                        </p>
-                    </div>
-                </a>
-
-            </div>
-
-            <!-- Recent Activity -->
-            <div class="mt-8">
-                <h2 class="text-lg font-semibold text-gray-900 mb-4">Activité récente</h2>
-
-                <!-- Loading State -->
-                <div id="candidaturesLoading" class="bg-white rounded-2xl shadow-lg p-6">
-                    <div class="flex items-center justify-center space-x-3">
-                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-                        <p class="text-gray-600">Chargement de vos candidatures...</p>
-                    </div>
-                </div>
-
-                <!-- Empty State -->
-                <div id="candidaturesEmpty" class="hidden bg-white rounded-2xl shadow-lg overflow-hidden">
-                    <div class="p-6 text-center text-gray-500">
-                        <svg class="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor"
-                             viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                        </svg>
-                        <p>Aucune activité récente</p>
-                        <a href="/offres" class="inline-block mt-3 text-primary-600 hover:text-primary-700 font-medium">Découvrir
-                            les offres disponibles →</a>
-                    </div>
-                </div>
-
-                <!-- Candidatures List -->
-                <div id="candidaturesList"
-                     class="hidden bg-white rounded-2xl shadow-lg overflow-hidden divide-y divide-gray-100">
-                    <!-- Will be populated dynamically -->
-                </div>
-            </div>
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-6 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-400 text-sm">
+            <p>&copy; 2026 Candidapp. Tous droits réservés.</p>
         </div>
-    </div>
-</main>
+    </footer>
 
-<!-- Footer -->
-<footer class="bg-gray-900 text-white py-6 mt-12">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-400 text-sm">
-        <p>&copy; 2026 Candidapp. Tous droits réservés.</p>
-    </div>
-</footer>
-
-<script>
-    const user = JSON.parse(sessionStorage.getItem('user') || 'null');
-
-    if (!user) {
-        window.location.href = '/login';
-    } else {
-        const initial = (user.email || '?').charAt(0).toUpperCase();
-
-        // Set user info
-        document.getElementById('userId').textContent = user.id;
-        document.getElementById('userEmail').textContent = user.email;
-        document.getElementById('userEmailHero').textContent = user.email;
-        document.getElementById('userEmailBadge').textContent = user.email;
-        document.getElementById('welcomeTitle').textContent = `Bienvenue !`;
-        document.getElementById('avatarInitial').textContent = initial;
-        document.getElementById('userInitial').textContent = initial;
-        document.getElementById('userBadge').classList.remove('hidden');
-    }
-
-    document.getElementById('logout').addEventListener('click', () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        sessionStorage.removeItem('token');
-        sessionStorage.removeItem('user');
-        window.location.href = '/login';
-    });
-
-    // Fonction pour formater les dates
-    function formatDate(dateString) {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('fr-FR', {
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric'
-        });
-    }
-
-    // Fonction pour obtenir le badge de statut
-    function getStatutBadge(statut) {
-        const badges = {
-            'EN_ATTENTE': {
-                class: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-                label: 'En attente',
-                icon: `<svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                 </svg>`
-            },
-            'RETENU': {
-                class: 'bg-green-100 text-green-800 border-green-200',
-                label: 'Acceptée',
-                icon: `<svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                 </svg>`
-            },
-            'REFUSE': {
-                class: 'bg-red-100 text-red-800 border-red-200',
-                label: 'Refusée',
-                icon: `<svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                 </svg>`
-            },
-            'ANNULE': {
-                class: 'bg-gray-100 text-gray-800 border-gray-200',
-                label: 'Annulée',
-                icon: `<svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                 </svg>`
-            }
-        };
-        return badges[statut] || badges['EN_ATTENTE'];
-    }
-
-    // Fonction pour vérifier si l'offre est invalide
-    function isOffreInvalide(statutOffre) {
-        const statutsInvalides = ['CLOTUREE', 'ARCHIVEE', 'REJETEE'];
-        return statutsInvalides.includes(statutOffre);
-    }
-
-    // Fonction pour charger les candidatures
-    async function loadCandidatures() {
+    <script>
         const user = JSON.parse(sessionStorage.getItem('user') || 'null');
-        if (!user || user.role !== 'ETUDIANT') {
-            // Si pas étudiant, ne pas charger les candidatures
-            document.getElementById('candidaturesLoading').classList.add('hidden');
-            document.getElementById('candidaturesEmpty').classList.remove('hidden');
-            return;
+
+        if (!user) {
+            window.location.href = '/login';
+        } else {
+            const initial = (user.email || '?').charAt(0).toUpperCase();
+
+            // Set user info
+            document.getElementById('userId').textContent = user.id;
+            document.getElementById('userEmail').textContent = user.email;
+            document.getElementById('userEmailHero').textContent = user.email;
+            document.getElementById('userEmailBadge').textContent = user.email;
+            document.getElementById('welcomeTitle').textContent = `Bienvenue !`;
+            document.getElementById('avatarInitial').textContent = initial;
+            document.getElementById('userInitial').textContent = initial;
+            document.getElementById('userBadge').classList.remove('hidden');
         }
 
-        try {
-            const res = await fetch('/api/candidatures/me', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: user.id, role: user.role })
+        document.getElementById('logout').addEventListener('click', () => {
+            sessionStorage.removeItem('user');
+            window.location.href = '/login';
+        });
+
+        // Fonction pour formater les dates
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('fr-FR', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
             });
-            const data = await res.json();
+        }
 
-            document.getElementById('candidaturesLoading').classList.add('hidden');
+        // Fonction pour obtenir le badge de statut
+        function getStatutBadge(statut) {
+            const badges = {
+                'EN_ATTENTE': {
+                    class: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+                    label: 'En attente',
+                    icon: `<svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                 </svg>`
+                },
+                'RETENU': {
+                    class: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+                    label: 'En attente',
+                    icon: `<svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                 </svg>`
+                },
+                'ACCEPTE': {
+                    class: 'bg-green-100 text-green-800 border-green-200',
+                    label: 'Acceptée',
+                    icon: `<svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                 </svg>`
+                },
+                'REFUSE': {
+                    class: 'bg-red-100 text-red-800 border-red-200',
+                    label: 'Refusée',
+                    icon: `<svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                 </svg>`
+                },
+                'ANNULE': {
+                    class: 'bg-gray-100 text-gray-800 border-gray-200',
+                    label: 'Annulée',
+                    icon: `<svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                 </svg>`
+                }
+            };
+            return badges[statut] || badges['EN_ATTENTE'];
+        }
 
-            if (!data.ok || data.candidatures.length === 0) {
+        // Fonction pour vérifier si l'offre est invalide
+        function isOffreInvalide(statutOffre) {
+            const statutsInvalides = ['CLOTUREE', 'ARCHIVEE', 'REJETEE'];
+            return statutsInvalides.includes(statutOffre);
+        }
+
+        // Fonction pour charger les candidatures
+        async function loadCandidatures() {
+            const user = JSON.parse(sessionStorage.getItem('user') || 'null');
+            if (!user || user.role !== 'ETUDIANT') {
+                // Si pas étudiant, ne pas charger les candidatures
+                document.getElementById('candidaturesLoading').classList.add('hidden');
                 document.getElementById('candidaturesEmpty').classList.remove('hidden');
                 return;
             }
 
-            const candidaturesList = document.getElementById('candidaturesList');
-            candidaturesList.innerHTML = '';
+            try {
+                const res = await fetch('/api/candidatures/me', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: user.id, role: user.role })
+                });
+                const data = await res.json();
 
-            data.candidatures.forEach((candidature, index) => {
-                const statutBadge = getStatutBadge(candidature.statut_candidature);
-                const offreInvalide = candidature.statut_candidature === 'EN_ATTENTE' &&
-                    isOffreInvalide(candidature.statut_actuel_offre);
+                document.getElementById('candidaturesLoading').classList.add('hidden');
 
-                const candidatureItem = document.createElement('div');
-                candidatureItem.className = 'p-5 hover:bg-gray-50 transition';
+                if (!data.ok || data.candidatures.length === 0) {
+                    document.getElementById('candidaturesEmpty').classList.remove('hidden');
+                    return;
+                }
 
-                candidatureItem.innerHTML = `
+                const candidaturesList = document.getElementById('candidaturesList');
+                candidaturesList.innerHTML = '';
+
+                data.candidatures.forEach((candidature, index) => {
+                    const statutBadge = getStatutBadge(candidature.statut_candidature);
+                    const offreInvalide = candidature.statut_candidature === 'EN_ATTENTE' &&
+                        isOffreInvalide(candidature.statut_actuel_offre);
+
+                    const candidatureItem = document.createElement('div');
+                    candidatureItem.className = 'p-5 hover:bg-gray-50 transition';
+
+                    candidatureItem.innerHTML = `
             <div class="flex items-start justify-between">
               <div class="flex-1">
                 <div class="flex items-start gap-3">
@@ -507,250 +531,250 @@
             </div>
           `;
 
-                candidaturesList.appendChild(candidatureItem);
-            });
+                    candidaturesList.appendChild(candidatureItem);
+                });
 
-            candidaturesList.classList.remove('hidden');
+                candidaturesList.classList.remove('hidden');
 
-        } catch (error) {
-            console.error('Erreur lors du chargement des candidatures:', error);
-            document.getElementById('candidaturesLoading').classList.add('hidden');
-            document.getElementById('candidaturesEmpty').classList.remove('hidden');
-        }
-    }
-
-    // Charger les candidatures au chargement de la page
-    loadCandidatures();
-
-    async function loadRcBadge() {
-        const raw = sessionStorage.getItem('user');
-        if (!raw) return;
-
-        const user = JSON.parse(raw);
-        if (user.role !== 'ETUDIANT') return; // badge utile surtout pour étudiant
-
-        const badge = document.getElementById('badgeRc');
-        if (!badge) return;
-
-        try {
-            const res = await fetch('/api/attestation-rc/me', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: user.id, role: user.role })
-            });
-
-            const data = await res.json();
-            const att = (res.ok && data.attestation) ? data.attestation : null;
-
-            let statut = 'AUCUNE';
-            if (att?.statut) statut = att.statut;
-
-            // Reset classes
-            badge.className = 'text-xs font-semibold px-2.5 py-1 rounded-full border';
-            badge.classList.remove('hidden');
-
-            // Style selon statut
-            if (statut === 'VALIDE') {
-                badge.classList.add('bg-green-50', 'border-green-200', 'text-green-700');
-                badge.textContent = 'VALIDE';
-            } else if (statut === 'EN_ATTENTE') {
-                badge.classList.add('bg-yellow-50', 'border-yellow-200', 'text-yellow-700');
-                badge.textContent = 'EN ATTENTE';
-            } else if (statut === 'REFUSE') {
-                badge.classList.add('bg-red-50', 'border-red-200', 'text-red-700');
-                badge.textContent = 'REFUSÉ';
-            } else {
-                badge.classList.add('bg-gray-50', 'border-gray-200', 'text-gray-700');
-                badge.textContent = 'AUCUNE';
+            } catch (error) {
+                console.error('Erreur lors du chargement des candidatures:', error);
+                document.getElementById('candidaturesLoading').classList.add('hidden');
+                document.getElementById('candidaturesEmpty').classList.remove('hidden');
             }
-        } catch (e) {
-            // Si erreur réseau, on peut cacher le badge
-            badge.classList.add('hidden');
-        }
-    }
-
-    // Appelle ça au chargement de la page profil
-    loadRcBadge();
-
-    // ===== GESTION PROFIL ETUDIANT (recherche + CV) =====
-
-    let currentCvUrl = null;
-
-    async function loadEtudiantProfile() {
-        const user = JSON.parse(sessionStorage.getItem('user') || 'null');
-        if (!user || user.role !== 'ETUDIANT') return;
-
-        // Afficher les sections
-        document.getElementById('rechercheSection').classList.remove('hidden');
-        document.getElementById('cvSection').classList.remove('hidden');
-
-        try {
-            const res = await fetch('/api/etudiant/profile', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: user.id, role: user.role })
-            });
-
-            if (!res.ok) return;
-
-            const data = await res.json();
-            if (!data.ok) return;
-
-            const profile = data.profile;
-
-            // Statut recherche
-            const toggle = document.getElementById('rechercheToggle');
-            const statusText = document.getElementById('rechercheStatus');
-            toggle.checked = profile.en_recherche;
-            statusText.textContent = profile.en_recherche ? 'En recherche' : 'Pas en recherche';
-            statusText.className = profile.en_recherche
-                ? 'font-medium text-green-600'
-                : 'font-medium text-gray-600';
-
-            // CV
-            currentCvUrl = profile.cv_url;
-            updateCvUI();
-
-        } catch (err) {
-            console.error('Erreur chargement profil étudiant:', err);
-        }
-    }
-
-    function updateCvUI() {
-        const cvStatus = document.getElementById('cvStatus');
-        const viewBtn = document.getElementById('viewCvBtn');
-        const deleteBtn = document.getElementById('deleteCvBtn');
-
-        if (currentCvUrl) {
-            cvStatus.textContent = 'CV déposé';
-            cvStatus.className = 'font-medium text-green-600';
-            viewBtn.classList.remove('hidden');
-            deleteBtn.classList.remove('hidden');
-        } else {
-            cvStatus.textContent = 'Non déposé';
-            cvStatus.className = 'font-medium text-gray-600';
-            viewBtn.classList.add('hidden');
-            deleteBtn.classList.add('hidden');
-        }
-    }
-
-    // Toggle recherche
-    document.getElementById('rechercheToggle').addEventListener('change', async (e) => {
-        const user = JSON.parse(sessionStorage.getItem('user') || 'null');
-        if (!user) return;
-
-        const enRecherche = e.target.checked;
-        const statusText = document.getElementById('rechercheStatus');
-
-        try {
-            const res = await fetch('/api/etudiant/recherche', {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: user.id, role: user.role, enRecherche })
-            });
-
-            if (res.ok) {
-                statusText.textContent = enRecherche ? 'En recherche' : 'Pas en recherche';
-                statusText.className = enRecherche
-                    ? 'font-medium text-green-600'
-                    : 'font-medium text-gray-600';
-            } else {
-                // Revert on error
-                e.target.checked = !enRecherche;
-            }
-        } catch (err) {
-            console.error('Erreur mise à jour recherche:', err);
-            e.target.checked = !enRecherche;
-        }
-    });
-
-    // Upload CV
-    document.getElementById('cvInput').addEventListener('change', async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        if (file.type !== 'application/pdf') {
-            alert('Le fichier doit être un PDF');
-            e.target.value = '';
-            return;
         }
 
-        if (file.size > 5 * 1024 * 1024) {
-            alert('Le fichier ne doit pas dépasser 5MB');
-            e.target.value = '';
-            return;
-        }
+        // Charger les candidatures au chargement de la page
+        loadCandidatures();
 
-        const user = JSON.parse(sessionStorage.getItem('user') || 'null');
-        if (!user) return;
+        async function loadRcBadge() {
+            const raw = sessionStorage.getItem('user');
+            if (!raw) return;
 
-        // Convert to base64
-        const reader = new FileReader();
-        reader.onload = async () => {
-            const cvBase64 = reader.result;
+            const user = JSON.parse(raw);
+            if (user.role !== 'ETUDIANT') return; // badge utile surtout pour étudiant
+
+            const badge = document.getElementById('badgeRc');
+            if (!badge) return;
 
             try {
-                const res = await fetch('/api/etudiant/cv', {
+                const res = await fetch('/api/attestation-rc/me', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ userId: user.id, role: user.role, cvBase64 })
+                    body: JSON.stringify({ userId: user.id, role: user.role })
                 });
 
                 const data = await res.json();
-                if (res.ok && data.ok) {
-                    currentCvUrl = cvBase64;
-                    updateCvUI();
+                const att = (res.ok && data.attestation) ? data.attestation : null;
+
+                let statut = 'AUCUNE';
+                if (att?.statut) statut = att.statut;
+
+                // Reset classes
+                badge.className = 'text-xs font-semibold px-2.5 py-1 rounded-full border';
+                badge.classList.remove('hidden');
+
+                // Style selon statut
+                if (statut === 'VALIDE') {
+                    badge.classList.add('bg-green-50', 'border-green-200', 'text-green-700');
+                    badge.textContent = 'VALIDE';
+                } else if (statut === 'EN_ATTENTE') {
+                    badge.classList.add('bg-yellow-50', 'border-yellow-200', 'text-yellow-700');
+                    badge.textContent = 'EN ATTENTE';
+                } else if (statut === 'REFUSE') {
+                    badge.classList.add('bg-red-50', 'border-red-200', 'text-red-700');
+                    badge.textContent = 'REFUSÉ';
                 } else {
-                    alert(data.message || 'Erreur lors du dépôt du CV');
+                    badge.classList.add('bg-gray-50', 'border-gray-200', 'text-gray-700');
+                    badge.textContent = 'AUCUNE';
+                }
+            } catch (e) {
+                // Si erreur réseau, on peut cacher le badge
+                badge.classList.add('hidden');
+            }
+        }
+
+        // Appelle ça au chargement de la page profil
+        loadRcBadge();
+
+        // ===== GESTION PROFIL ETUDIANT (recherche + CV) =====
+
+        let currentCvUrl = null;
+
+        async function loadEtudiantProfile() {
+            const user = JSON.parse(sessionStorage.getItem('user') || 'null');
+            if (!user || user.role !== 'ETUDIANT') return;
+
+            // Afficher les sections
+            document.getElementById('rechercheSection').classList.remove('hidden');
+            document.getElementById('cvSection').classList.remove('hidden');
+
+            try {
+                const res = await fetch('/api/etudiant/profile', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: user.id, role: user.role })
+                });
+
+                if (!res.ok) return;
+
+                const data = await res.json();
+                if (!data.ok) return;
+
+                const profile = data.profile;
+
+                // Statut recherche
+                const toggle = document.getElementById('rechercheToggle');
+                const statusText = document.getElementById('rechercheStatus');
+                toggle.checked = profile.en_recherche;
+                statusText.textContent = profile.en_recherche ? 'En recherche' : 'Pas en recherche';
+                statusText.className = profile.en_recherche
+                    ? 'font-medium text-green-600'
+                    : 'font-medium text-gray-600';
+
+                // CV
+                currentCvUrl = profile.cv_url;
+                updateCvUI();
+
+            } catch (err) {
+                console.error('Erreur chargement profil étudiant:', err);
+            }
+        }
+
+        function updateCvUI() {
+            const cvStatus = document.getElementById('cvStatus');
+            const viewBtn = document.getElementById('viewCvBtn');
+            const deleteBtn = document.getElementById('deleteCvBtn');
+
+            if (currentCvUrl) {
+                cvStatus.textContent = 'CV déposé';
+                cvStatus.className = 'font-medium text-green-600';
+                viewBtn.classList.remove('hidden');
+                deleteBtn.classList.remove('hidden');
+            } else {
+                cvStatus.textContent = 'Non déposé';
+                cvStatus.className = 'font-medium text-gray-600';
+                viewBtn.classList.add('hidden');
+                deleteBtn.classList.add('hidden');
+            }
+        }
+
+        // Toggle recherche
+        document.getElementById('rechercheToggle').addEventListener('change', async (e) => {
+            const user = JSON.parse(sessionStorage.getItem('user') || 'null');
+            if (!user) return;
+
+            const enRecherche = e.target.checked;
+            const statusText = document.getElementById('rechercheStatus');
+
+            try {
+                const res = await fetch('/api/etudiant/recherche', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: user.id, role: user.role, enRecherche })
+                });
+
+                if (res.ok) {
+                    statusText.textContent = enRecherche ? 'En recherche' : 'Pas en recherche';
+                    statusText.className = enRecherche
+                        ? 'font-medium text-green-600'
+                        : 'font-medium text-gray-600';
+                } else {
+                    // Revert on error
+                    e.target.checked = !enRecherche;
                 }
             } catch (err) {
-                console.error('Erreur upload CV:', err);
-                alert('Erreur lors du dépôt du CV');
+                console.error('Erreur mise à jour recherche:', err);
+                e.target.checked = !enRecherche;
+            }
+        });
+
+        // Upload CV
+        document.getElementById('cvInput').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            if (file.type !== 'application/pdf') {
+                alert('Le fichier doit être un PDF');
+                e.target.value = '';
+                return;
             }
 
-            e.target.value = '';
-        };
-        reader.readAsDataURL(file);
-    });
+            if (file.size > 5 * 1024 * 1024) {
+                alert('Le fichier ne doit pas dépasser 5MB');
+                e.target.value = '';
+                return;
+            }
 
-    // Voir CV
-    document.getElementById('viewCvBtn').addEventListener('click', () => {
-        if (currentCvUrl) {
-            const newWindow = window.open();
-            newWindow.document.write(`<iframe src="${currentCvUrl}" style="width:100%;height:100%;border:none;"></iframe>`);
-        }
-    });
+            const user = JSON.parse(sessionStorage.getItem('user') || 'null');
+            if (!user) return;
 
-    // Supprimer CV
-    document.getElementById('deleteCvBtn').addEventListener('click', async () => {
-        if (!confirm('Voulez-vous vraiment supprimer votre CV ?')) return;
+            // Convert to base64
+            const reader = new FileReader();
+            reader.onload = async () => {
+                const cvBase64 = reader.result;
 
-        const user = JSON.parse(sessionStorage.getItem('user') || 'null');
-        if (!user) return;
+                try {
+                    const res = await fetch('/api/etudiant/cv', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ userId: user.id, role: user.role, cvBase64 })
+                    });
 
-        try {
-            const res = await fetch('/api/etudiant/cv', {
-                method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: user.id, role: user.role })
-            });
+                    const data = await res.json();
+                    if (res.ok && data.ok) {
+                        currentCvUrl = cvBase64;
+                        updateCvUI();
+                    } else {
+                        alert(data.message || 'Erreur lors du dépôt du CV');
+                    }
+                } catch (err) {
+                    console.error('Erreur upload CV:', err);
+                    alert('Erreur lors du dépôt du CV');
+                }
 
-            if (res.ok) {
-                currentCvUrl = null;
-                updateCvUI();
-            } else {
+                e.target.value = '';
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // Voir CV
+        document.getElementById('viewCvBtn').addEventListener('click', () => {
+            if (currentCvUrl) {
+                const newWindow = window.open();
+                newWindow.document.write(`<iframe src="${currentCvUrl}" style="width:100%;height:100%;border:none;"></iframe>`);
+            }
+        });
+
+        // Supprimer CV
+        document.getElementById('deleteCvBtn').addEventListener('click', async () => {
+            if (!confirm('Voulez-vous vraiment supprimer votre CV ?')) return;
+
+            const user = JSON.parse(sessionStorage.getItem('user') || 'null');
+            if (!user) return;
+
+            try {
+                const res = await fetch('/api/etudiant/cv', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: user.id, role: user.role })
+                });
+
+                if (res.ok) {
+                    currentCvUrl = null;
+                    updateCvUI();
+                } else {
+                    alert('Erreur lors de la suppression du CV');
+                }
+            } catch (err) {
+                console.error('Erreur suppression CV:', err);
                 alert('Erreur lors de la suppression du CV');
             }
-        } catch (err) {
-            console.error('Erreur suppression CV:', err);
-            alert('Erreur lors de la suppression du CV');
-        }
-    });
+        });
 
-    // Charger le profil étudiant
-    loadEtudiantProfile();
-</script>
-<script src="/js/notifications.js"></script>
+        // Charger le profil étudiant
+        loadEtudiantProfile();
+    </script>
+    <script src="/js/notifications.js"></script>
 </body>
 
 </html>
