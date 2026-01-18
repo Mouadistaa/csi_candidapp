@@ -4,8 +4,6 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <title>Candidapp - Consulter les offres</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -296,7 +294,7 @@
 
         // Gestion de l'authentification
         function initAuth() {
-            const user = JSON.parse(localStorage.getItem('user') || sessionStorage.getItem('user') || 'null');
+            const user = JSON.parse(sessionStorage.getItem('user') || 'null');
             if (user) {
                 const initial = (user.email || '?').charAt(0).toUpperCase();
                 document.getElementById('userInitial').textContent = initial;

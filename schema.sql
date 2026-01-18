@@ -117,7 +117,7 @@ create table "Secretaire"
             references "Utilisateur"
             on delete cascade,
     en_conge       boolean,
-    promo          integer
+    promo          integer not null
 );
 
 alter table "Secretaire"
@@ -296,7 +296,7 @@ create table "Etudiant"
     en_recherche   boolean default false,
     profil_visible boolean default false,
     cv_url         text,
-    promo          integer,
+    promo          integer not null,
     groupe_id      integer
         constraint fk_etudiant_groupe
             references "GroupeEtudiant"
@@ -481,7 +481,7 @@ grant insert on v_action_creer_offre to role_entreprise;
 create view v_mes_candidatures_etudiant
             (utilisateur_id, etudiant_id, candidature_id, date_candidature, statut_candidature, source, offre_id,
              offre_titre, offre_type, remuneration, duree_mois, lieu_mission, statut_actuel_offre, entreprise_nom,
-             entreprise_ville, entreprise_site)
+             entreprise_ville, entreprise_site, nom_groupe, enseignant_referent_id, secretaire_gestionnaire_id)
 as
 SELECT u.id                 AS utilisateur_id,
        et.etudiant_id,
@@ -498,12 +498,16 @@ SELECT u.id                 AS utilisateur_id,
        o.statut_validation  AS statut_actuel_offre,
        e.raison_sociale     AS entreprise_nom,
        e.ville              AS entreprise_ville,
-       e.site_web           AS entreprise_site
+       e.site_web           AS entreprise_site,
+       ge.nom_groupe,
+       ge.enseignant_referent_id,
+       ge.secretaire_gestionnaire_id
 FROM "Candidature" c
          JOIN "Etudiant" et ON c.etudiant_id = et.etudiant_id
          JOIN "Utilisateur" u ON et.utilisateur_id = u.id
          JOIN "Offre" o ON c.offre_id = o.id
-         JOIN "Entreprise" e ON o.entreprise_id = e.entreprise_id;
+         JOIN "Entreprise" e ON o.entreprise_id = e.entreprise_id
+         LEFT JOIN "GroupeEtudiant" ge ON et.groupe_id = ge.groupe_id;
 
 alter table v_mes_candidatures_etudiant
     owner to m1user1_02;
@@ -622,15 +626,6 @@ alter table v_action_enseignant_review_offre
     owner to m1user1_02;
 
 grant update on v_action_enseignant_review_offre to role_enseignant;
-
-create view v_action_enseignant_valider_affectation(candidature_id) as
-SELECT "Affectation".candidature_id
-FROM "Affectation";
-
-alter table v_action_enseignant_valider_affectation
-    owner to m1user1_02;
-
-grant insert on v_action_enseignant_valider_affectation to role_enseignant;
 
 create view v_referentiel_legal
             (regle_id, pays, type_contrat, remuneration_min, duree_min_mois, duree_max_mois, date_effet, date_fin,
@@ -824,24 +819,6 @@ alter table v_action_modifier_referentiel_legal
     owner to m1user1_03;
 
 grant delete, insert, select, update on v_action_modifier_referentiel_legal to role_enseignant;
-
-create view v_action_creer_etudiant
-            (secretaire_utilisateur_id, email, password_hash, nom, prenom, formation, promo, utilisateur_id_created,
-             etudiant_id_created)
-as
-SELECT NULL::integer AS secretaire_utilisateur_id,
-       NULL::text    AS email,
-       NULL::text    AS password_hash,
-       NULL::text    AS nom,
-       NULL::text    AS prenom,
-       NULL::text    AS formation,
-       NULL::text    AS promo,
-       NULL::integer AS utilisateur_id_created,
-       NULL::integer AS etudiant_id_created
-WHERE false;
-
-alter table v_action_creer_etudiant
-    owner to m1user1_04;
 
 create view v_action_update_profil_etudiant(utilisateur_id, en_recherche, cv_url) as
 SELECT e.utilisateur_id,
@@ -1075,35 +1052,259 @@ alter table v_attestations_rc_a_valider
 
 grant select on v_attestations_rc_a_valider to role_secretaire;
 
+create view v_etudiants_par_secretaire
+            (secretaire_id, utilisateur_id, email, role, etudiant_id, nom, prenom, formation, promo, en_recherche,
+             profil_visible, cv_url)
+as
+SELECT s.secretaire_id,
+       u.id AS utilisateur_id,
+       u.email,
+       u.role,
+       e.etudiant_id,
+       e.nom,
+       e.prenom,
+       e.formation,
+       e.promo,
+       e.en_recherche,
+       e.profil_visible,
+       e.cv_url
+FROM "Secretaire" s
+         JOIN "GroupeEtudiant" ge ON ge.secretaire_gestionnaire_id = s.secretaire_id
+         JOIN "Etudiant" e ON e.groupe_id = ge.groupe_id
+         JOIN "Utilisateur" u ON u.id = e.utilisateur_id
+WHERE u.actif = true;
+
+alter table v_etudiants_par_secretaire
+    owner to m1user1_02;
+
+grant select on v_etudiants_par_secretaire to secretaire;
+
+create view v_action_creer_etudiant
+            (secretaire_utilisateur_id, email, password_hash, nom, prenom, formation, promo, utilisateur_id_created,
+             etudiant_id_created)
+as
+SELECT NULL::integer AS secretaire_utilisateur_id,
+       NULL::text    AS email,
+       NULL::text    AS password_hash,
+       NULL::text    AS nom,
+       NULL::text    AS prenom,
+       NULL::text    AS formation,
+       NULL::integer AS promo,
+       NULL::integer AS utilisateur_id_created,
+       NULL::integer AS etudiant_id_created;
+
+alter table v_action_creer_etudiant
+    owner to m1user1_03;
+
+create view v_action_creer_affectation(candidature_id) as
+SELECT c.id AS candidature_id
+FROM "Candidature" c;
+
+alter table v_action_creer_affectation
+    owner to m1user1_02;
+
+grant insert on v_action_creer_affectation to secretaire;
+
+create view v_admin_stats
+            (total_utilisateurs, total_etudiants, total_entreprises, total_offres_actives, total_groupes,
+             total_affectations) as
+SELECT (SELECT count(*) AS count
+        FROM "Utilisateur"
+        WHERE "Utilisateur".actif = true)                                   AS total_utilisateurs,
+       (SELECT count(*) AS count
+        FROM "Etudiant" e
+                 JOIN "Utilisateur" u ON e.utilisateur_id = u.id
+        WHERE u.actif = true)                                               AS total_etudiants,
+       (SELECT count(*) AS count
+        FROM "Entreprise" e
+                 JOIN "Utilisateur" u ON e.utilisateur_id = u.id
+        WHERE u.actif = true)                                               AS total_entreprises,
+       (SELECT count(*) AS count
+        FROM "Offre"
+        WHERE "Offre".statut_validation = 'VALIDE'::validation_statut_enum) AS total_offres_actives,
+       (SELECT count(*) AS count
+        FROM "GroupeEtudiant")                                              AS total_groupes,
+       (SELECT count(*) AS count
+        FROM "Candidature"
+        WHERE "Candidature".statut = 'RETENU'::cand_statut_enum)            AS total_affectations;
+
+alter table v_admin_stats
+    owner to m1user1_03;
+
+grant select on v_admin_stats to role_admin;
+
+create view v_admin_groupes
+            (groupe_id, nom_groupe, annee_scolaire, enseignant_id, enseignant_email, enseignant_nom, secretaire_id,
+             secretaire_email, secretaire_nom, nb_etudiants)
+as
+SELECT g.groupe_id,
+       g.nom_groupe,
+       g.annee_scolaire,
+       e.enseignant_id,
+       ue.email                       AS enseignant_email,
+       ue.nom                         AS enseignant_nom,
+       s.secretaire_id,
+       us.email                       AS secretaire_email,
+       us.nom                         AS secretaire_nom,
+       count(DISTINCT et.etudiant_id) AS nb_etudiants
+FROM "GroupeEtudiant" g
+         LEFT JOIN "Enseignant" e ON g.enseignant_referent_id = e.enseignant_id
+         LEFT JOIN "Utilisateur" ue ON e.utilisateur_id = ue.id
+         LEFT JOIN "Secretaire" s ON g.secretaire_gestionnaire_id = s.secretaire_id
+         LEFT JOIN "Utilisateur" us ON s.utilisateur_id = us.id
+         LEFT JOIN "Etudiant" et ON et.groupe_id = g.groupe_id
+GROUP BY g.groupe_id, g.nom_groupe, g.annee_scolaire, e.enseignant_id, ue.email, ue.nom, s.secretaire_id, us.email,
+         us.nom;
+
+alter table v_admin_groupes
+    owner to m1user1_03;
+
+grant select on v_admin_groupes to role_admin;
+
+create view v_admin_enseignants(enseignant_id, utilisateur_id, email, nom, actif) as
+SELECT e.enseignant_id,
+       u.id AS utilisateur_id,
+       u.email,
+       u.nom,
+       u.actif
+FROM "Enseignant" e
+         JOIN "Utilisateur" u ON e.utilisateur_id = u.id
+WHERE u.actif = true;
+
+alter table v_admin_enseignants
+    owner to m1user1_03;
+
+grant select on v_admin_enseignants to role_admin;
+
+create view v_admin_secretaires(secretaire_id, utilisateur_id, email, nom, actif, en_conge) as
+SELECT s.secretaire_id,
+       u.id AS utilisateur_id,
+       u.email,
+       u.nom,
+       u.actif,
+       s.en_conge
+FROM "Secretaire" s
+         JOIN "Utilisateur" u ON s.utilisateur_id = u.id
+WHERE u.actif = true;
+
+alter table v_admin_secretaires
+    owner to m1user1_03;
+
+grant select on v_admin_secretaires to role_admin;
+
+create view v_action_creer_groupe (nom_groupe, annee_scolaire, enseignant_id, secretaire_id, groupe_id_created) as
+SELECT NULL::text    AS nom_groupe,
+       NULL::integer AS annee_scolaire,
+       NULL::integer AS enseignant_id,
+       NULL::integer AS secretaire_id,
+       NULL::integer AS groupe_id_created;
+
+alter table v_action_creer_groupe
+    owner to m1user1_03;
+
+grant insert on v_action_creer_groupe to role_admin;
+
+create view v_action_modifier_groupe(groupe_id, nom_groupe, annee_scolaire, enseignant_id, secretaire_id) as
+SELECT g.groupe_id,
+       g.nom_groupe,
+       g.annee_scolaire,
+       g.enseignant_referent_id     AS enseignant_id,
+       g.secretaire_gestionnaire_id AS secretaire_id
+FROM "GroupeEtudiant" g;
+
+alter table v_action_modifier_groupe
+    owner to m1user1_03;
+
+grant update on v_action_modifier_groupe to role_admin;
+
+create view v_action_supprimer_groupe(groupe_id, nom_groupe) as
+SELECT g.groupe_id,
+       g.nom_groupe
+FROM "GroupeEtudiant" g;
+
+alter table v_action_supprimer_groupe
+    owner to m1user1_03;
+
+grant delete on v_action_supprimer_groupe to role_admin;
+
+create view v_action_creer_enseignant (email, password_hash, nom, utilisateur_id_created, enseignant_id_created) as
+SELECT NULL::text    AS email,
+       NULL::text    AS password_hash,
+       NULL::text    AS nom,
+       NULL::integer AS utilisateur_id_created,
+       NULL::integer AS enseignant_id_created;
+
+alter table v_action_creer_enseignant
+    owner to m1user1_03;
+
+grant insert on v_action_creer_enseignant to role_admin;
+
+create view v_action_creer_secretaire (email, password_hash, nom, utilisateur_id_created, secretaire_id_created) as
+SELECT NULL::text    AS email,
+       NULL::text    AS password_hash,
+       NULL::text    AS nom,
+       NULL::integer AS utilisateur_id_created,
+       NULL::integer AS secretaire_id_created;
+
+alter table v_action_creer_secretaire
+    owner to m1user1_03;
+
+grant insert on v_action_creer_secretaire to role_admin;
+
 create function trg_action_postuler_func() returns trigger
     language plpgsql
 as
 $$
 DECLARE
     v_statut_offre validation_statut_enum;
+    v_nouvelle_offre_debut DATE;
+    v_nouvelle_offre_fin DATE;
+    v_conflit_offre_titre TEXT;
 BEGIN
-    -- 1. Vérification Offre (Inchangé)
-    SELECT statut_validation INTO v_statut_offre
-    FROM "Offre" WHERE id = NEW.offre_id;
+    -- 1. Vérification Offre validée
+    SELECT statut_validation, date_debut, (date_debut + (duree_mois || ' months')::INTERVAL)::DATE
+    INTO v_statut_offre, v_nouvelle_offre_debut, v_nouvelle_offre_fin
+    FROM "Offre"
+    WHERE id = NEW.offre_id;
 
     IF v_statut_offre IS DISTINCT FROM 'VALIDE' THEN
         RAISE EXCEPTION 'Impossible de postuler : Cette offre n''est pas disponible.';
     END IF;
 
-    -- 2. Vérification Doublon (MODIFIÉ)
-    -- On vérifie s'il existe déjà une candidature pour cette offre/étudiant
-    -- MAIS on ignore celles qui sont 'ANNULE'.
+    -- 2. Vérification Doublon (candidature existante non annulée)
     IF EXISTS (
         SELECT 1
         FROM "Candidature"
         WHERE offre_id = NEW.offre_id
           AND etudiant_id = NEW.etudiant_id
-          AND statut != 'ANNULE' -- C'est ici que la magie opère
+          AND statut != 'ANNULE'
     ) THEN
         RAISE EXCEPTION 'Vous avez déjà une candidature pour cette offre.';
     END IF;
 
-    -- 3. Insertion réelle (Inchangé)
+    -- 3. NOUVEAU : Vérification de chevauchement avec les affectations existantes
+    -- On récupère les offres où l'étudiant est affecté (candidature RETENU + affectation)
+    -- et on vérifie si les dates chevauchent
+    SELECT o.titre INTO v_conflit_offre_titre
+    FROM "Affectation" a
+             JOIN "Candidature" c ON a.candidature_id = c.id
+             JOIN "Offre" o ON c.offre_id = o.id
+    WHERE c.etudiant_id = NEW.etudiant_id
+      AND c.statut = 'RETENU'
+      -- Vérification du chevauchement de dates
+      -- Période existante : [o.date_debut, o.date_debut + duree_mois]
+      -- Période nouvelle : [v_nouvelle_offre_debut, v_nouvelle_offre_fin]
+      -- Chevauchement si : debut1 < fin2 AND debut2 < fin1
+      AND o.date_debut < v_nouvelle_offre_fin
+      AND v_nouvelle_offre_debut < (o.date_debut + (o.duree_mois || ' months')::INTERVAL)::DATE
+    LIMIT 1;
+
+    IF v_conflit_offre_titre IS NOT NULL THEN
+        RAISE EXCEPTION 'Impossible de postuler : Vous êtes déjà affecté(e) à une offre dont les dates chevauchent cette période (%).',
+            v_conflit_offre_titre;
+    END IF;
+
+    -- 4. Insertion de la candidature
     INSERT INTO "Candidature" (offre_id, etudiant_id, source, statut, date_candidature)
     VALUES (NEW.offre_id, NEW.etudiant_id, NEW.source, 'EN_ATTENTE', CURRENT_DATE);
 
@@ -1359,12 +1560,6 @@ $$;
 
 alter function trg_ens_valider_affectation_func() owner to m1user1_02;
 
-create trigger trg_ens_valider_affectation_insert
-    instead of insert
-    on v_action_enseignant_valider_affectation
-    for each row
-execute procedure trg_ens_valider_affectation_func();
-
 create function trg_action_deposer_attestation_rc_func() returns trigger
     language plpgsql
 as
@@ -1539,7 +1734,7 @@ BEGIN
     -- 1) Vérifier que l'appelant est bien secrétaire
     IF NOT EXISTS (
         SELECT 1
-        FROM public.v_secretaire_by_user s
+        FROM public.v_secretaire_autorise_by_user s
         WHERE s.utilisateur_id = NEW.secretaire_utilisateur_id
     ) THEN
         RAISE EXCEPTION 'Accès interdit: utilisateur % n''est pas secrétaire', NEW.secretaire_utilisateur_id;
@@ -1573,12 +1768,6 @@ END;
 $$;
 
 alter function trg_action_creer_etudiant_func() owner to m1user1_04;
-
-create trigger trg_action_creer_etudiant
-    instead of insert
-    on v_action_creer_etudiant
-    for each row
-execute procedure trg_action_creer_etudiant_func();
 
 create function trg_action_update_profil_etudiant_func() returns trigger
     language plpgsql
@@ -4686,6 +4875,375 @@ END;
 $$;
 
 alter function notify_rc_expirations_proches(integer) owner to m1user1_03;
+
+create function fn_creer_etudiant() returns trigger
+    security definer
+    language plpgsql
+as
+$$
+DECLARE
+    v_secretaire_id INTEGER;
+    v_groupe_id INTEGER;
+    v_utilisateur_id INTEGER;
+    v_etudiant_id INTEGER;
+BEGIN
+    -- 1. Vérifier que l'utilisateur est bien une secrétaire
+    SELECT s.secretaire_id INTO v_secretaire_id
+    FROM public."Secretaire" s
+             JOIN public."Utilisateur" u ON u.id = s.utilisateur_id
+    WHERE u.id = NEW.secretaire_utilisateur_id
+      AND u.role = 'SECRETAIRE'
+      AND u.actif = true;
+
+    IF v_secretaire_id IS NULL THEN
+        RAISE EXCEPTION 'Accès interdit : utilisateur non secrétaire ou inactif';
+    END IF;
+
+    -- 2. Récupérer le groupe_id de la secrétaire
+    SELECT ge.groupe_id INTO v_groupe_id
+    FROM public."GroupeEtudiant" ge
+    WHERE ge.secretaire_gestionnaire_id = v_secretaire_id
+    LIMIT 1;
+
+    IF v_groupe_id IS NULL THEN
+        RAISE EXCEPTION 'Aucun groupe assigné à cette secrétaire';
+    END IF;
+
+    -- 3. Vérifier unicité email
+    IF EXISTS (SELECT 1 FROM public."Utilisateur" WHERE email = NEW.email) THEN
+        RAISE EXCEPTION 'Email déjà utilisé : %', NEW.email;
+    END IF;
+
+    -- 4. Créer l'utilisateur
+    INSERT INTO public."Utilisateur" (email, password_hash, role, actif)
+    VALUES (NEW.email, NEW.password_hash, 'ETUDIANT', true)
+    RETURNING id INTO v_utilisateur_id;
+
+    -- 5. Créer l'étudiant avec groupe_id
+    INSERT INTO public."Etudiant" (utilisateur_id, nom, prenom, formation, promo, groupe_id, en_recherche, profil_visible)
+    VALUES (v_utilisateur_id, NEW.nom, NEW.prenom, NEW.formation, NEW.promo, v_groupe_id, false, false)
+    RETURNING etudiant_id INTO v_etudiant_id;
+
+    -- 6. Retourner les IDs créés
+    NEW.utilisateur_id_created := v_utilisateur_id;
+    NEW.etudiant_id_created := v_etudiant_id;
+
+    RETURN NEW;
+END;
+$$;
+
+alter function fn_creer_etudiant() owner to m1user1_03;
+
+create trigger trg_creer_etudiant
+    instead of insert
+    on v_action_creer_etudiant
+    for each row
+execute procedure fn_creer_etudiant();
+
+create function trg_fnc_action_creer_affectation() returns trigger
+    language plpgsql
+as
+$$
+DECLARE
+    v_etudiant_id UUID;
+    v_offre_id UUID;
+    v_statut_candidature VARCHAR;
+    v_enseignant_ref_id INTEGER;
+    v_date_debut DATE;
+    v_duree_semaines INTEGER;
+    v_date_fin_estimee DATE;
+BEGIN
+    -- A. Récupération des infos contextuelles (Etudiant, Offre, Statut)
+    SELECT
+        c.etudiant_id,
+        c.offre_id,
+        c.statut,
+        o.date_debut,
+        o.duree_semaines -- Supposons que tu as ce champ dans Offre
+    INTO
+        v_etudiant_id,
+        v_offre_id,
+        v_statut_candidature,
+        v_date_debut,
+        v_duree_semaines
+    FROM public."Candidature" c
+             JOIN public."Offre" o ON c.offre_id = o.id
+    WHERE c.id = NEW.candidature_id;
+
+    -- B. Vérification 1 : Existence
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Candidature introuvable (ID: %)', NEW.candidature_id;
+    END IF;
+
+    -- C. Vérification 2 : Règle Critique (Statut)
+    IF v_statut_candidature != 'RETENU' THEN
+        RAISE EXCEPTION 'Blocage Sécurité : Impossible de créer une affectation. La candidature doit être au statut RETENU (Statut actuel : %)', v_statut_candidature;
+    END IF;
+
+    -- D. Vérification 3 : Doublons
+    PERFORM 1 FROM public."Affectation"
+    WHERE etudiant_id = v_etudiant_id AND offre_id = v_offre_id;
+
+    IF FOUND THEN
+        RAISE EXCEPTION 'Une affectation existe déjà pour cet étudiant sur cette offre.';
+    END IF;
+
+    -- E. "Auto-Wiring" : Récupération automatique du Professeur Référent via le Groupe
+    -- C'est ici qu'on utilise ta nouvelle table GroupeEtudiant !
+    SELECT g.enseignant_referent_id
+    INTO v_enseignant_ref_id
+    FROM public."Etudiant" e
+             JOIN public."GroupeEtudiant" g ON e.groupe_id = g.groupe_id
+    WHERE e.etudiant_id = v_etudiant_id;
+
+    -- Calcul de la date de fin (si dispo, sinon NULL)
+    IF v_date_debut IS NOT NULL AND v_duree_semaines IS NOT NULL THEN
+        v_date_fin_estimee := v_date_debut + (v_duree_semaines * 7);
+    ELSE
+        v_date_fin_estimee := NULL; -- Sera rempli plus tard manuellement si besoin
+    END IF;
+
+    -- F. Action Finale : Insertion propre dans la table Affectation
+    INSERT INTO public."Affectation" (
+        etudiant_id,
+        offre_id,
+        enseignant_id, -- On assigne automatiquement le prof du groupe !
+        date_debut,
+        date_fin,
+        date_creation -- Supposant que tu as ce champ
+    ) VALUES (
+                 v_etudiant_id,
+                 v_offre_id,
+                 v_enseignant_ref_id, -- Peut être NULL si l'étudiant n'a pas de groupe, PostgreSQL gèrera
+                 v_date_debut,
+                 v_date_fin_estimee,
+                 NOW()
+             );
+
+    RETURN NEW;
+END;
+$$;
+
+alter function trg_fnc_action_creer_affectation() owner to m1user1_02;
+
+create trigger trg_action_creer_affectation
+    instead of insert
+    on v_action_creer_affectation
+    for each row
+execute procedure trg_fnc_action_creer_affectation();
+
+create function fn_creer_groupe() returns trigger
+    security definer
+    language plpgsql
+as
+$$
+DECLARE
+    v_groupe_id INTEGER;
+BEGIN
+    -- Vérifier que l'enseignant existe et est actif
+    IF NOT EXISTS (
+        SELECT 1 FROM "Enseignant" e
+                          JOIN "Utilisateur" u ON e.utilisateur_id = u.id
+        WHERE e.enseignant_id = NEW.enseignant_id AND u.actif = true
+    ) THEN
+        RAISE EXCEPTION 'Enseignant invalide ou inactif';
+    END IF;
+
+    -- Vérifier que la secrétaire existe et est active
+    IF NOT EXISTS (
+        SELECT 1 FROM "Secretaire" s
+                          JOIN "Utilisateur" u ON s.utilisateur_id = u.id
+        WHERE s.secretaire_id = NEW.secretaire_id AND u.actif = true
+    ) THEN
+        RAISE EXCEPTION 'Secrétaire invalide ou inactive';
+    END IF;
+
+    -- Créer le groupe
+    INSERT INTO "GroupeEtudiant" (nom_groupe, annee_scolaire, enseignant_referent_id, secretaire_gestionnaire_id)
+    VALUES (NEW.nom_groupe, NEW.annee_scolaire, NEW.enseignant_id, NEW.secretaire_id)
+    RETURNING groupe_id INTO v_groupe_id;
+
+    -- Retourner l'ID créé
+    NEW.groupe_id_created := v_groupe_id;
+
+    RETURN NEW;
+END;
+$$;
+
+alter function fn_creer_groupe() owner to m1user1_03;
+
+create trigger trg_creer_groupe
+    instead of insert
+    on v_action_creer_groupe
+    for each row
+execute procedure fn_creer_groupe();
+
+create function fn_modifier_groupe() returns trigger
+    security definer
+    language plpgsql
+as
+$$
+BEGIN
+    -- Vérifier que le groupe existe
+    IF NOT EXISTS (SELECT 1 FROM "GroupeEtudiant" WHERE groupe_id = OLD.groupe_id) THEN
+        RAISE EXCEPTION 'Groupe non trouvé';
+    END IF;
+
+    -- Vérifier que l'enseignant existe et est actif
+    IF NOT EXISTS (
+        SELECT 1 FROM "Enseignant" e
+                          JOIN "Utilisateur" u ON e.utilisateur_id = u.id
+        WHERE e.enseignant_id = NEW.enseignant_id AND u.actif = true
+    ) THEN
+        RAISE EXCEPTION 'Enseignant invalide ou inactif';
+    END IF;
+
+    -- Vérifier que la secrétaire existe et est active
+    IF NOT EXISTS (
+        SELECT 1 FROM "Secretaire" s
+                          JOIN "Utilisateur" u ON s.utilisateur_id = u.id
+        WHERE s.secretaire_id = NEW.secretaire_id AND u.actif = true
+    ) THEN
+        RAISE EXCEPTION 'Secrétaire invalide ou inactive';
+    END IF;
+
+    -- Mettre à jour le groupe
+    UPDATE "GroupeEtudiant"
+    SET nom_groupe = NEW.nom_groupe,
+        annee_scolaire = NEW.annee_scolaire,
+        enseignant_referent_id = NEW.enseignant_id,
+        secretaire_gestionnaire_id = NEW.secretaire_id
+    WHERE groupe_id = OLD.groupe_id;
+
+    RETURN NEW;
+END;
+$$;
+
+alter function fn_modifier_groupe() owner to m1user1_03;
+
+create trigger trg_modifier_groupe
+    instead of update
+    on v_action_modifier_groupe
+    for each row
+execute procedure fn_modifier_groupe();
+
+create function fn_supprimer_groupe() returns trigger
+    security definer
+    language plpgsql
+as
+$$
+DECLARE
+    v_nb_etudiants INTEGER;
+BEGIN
+    -- Vérifier que le groupe existe
+    IF NOT EXISTS (SELECT 1 FROM "GroupeEtudiant" WHERE groupe_id = OLD.groupe_id) THEN
+        RAISE EXCEPTION 'Groupe non trouvé';
+    END IF;
+
+    -- Compter les étudiants dans ce groupe
+    SELECT COUNT(*) INTO v_nb_etudiants
+    FROM "Etudiant"
+    WHERE groupe_id = OLD.groupe_id;
+
+    -- Empêcher la suppression si des étudiants sont présents
+    IF v_nb_etudiants > 0 THEN
+        RAISE EXCEPTION 'Impossible de supprimer un groupe contenant % étudiants', v_nb_etudiants;
+    END IF;
+
+    -- Supprimer le groupe
+    DELETE FROM "GroupeEtudiant" WHERE groupe_id = OLD.groupe_id;
+
+    RETURN OLD;
+END;
+$$;
+
+alter function fn_supprimer_groupe() owner to m1user1_03;
+
+create trigger trg_supprimer_groupe
+    instead of delete
+    on v_action_supprimer_groupe
+    for each row
+execute procedure fn_supprimer_groupe();
+
+create function fn_creer_enseignant() returns trigger
+    security definer
+    language plpgsql
+as
+$$
+DECLARE
+    v_utilisateur_id INTEGER;
+    v_enseignant_id INTEGER;
+BEGIN
+    -- Vérifier unicité email
+    IF EXISTS (SELECT 1 FROM "Utilisateur" WHERE email = NEW.email) THEN
+        RAISE EXCEPTION 'Email déjà utilisé : %', NEW.email;
+    END IF;
+
+    -- Créer l'utilisateur
+    INSERT INTO "Utilisateur" (email, password_hash, role, actif, nom)
+    VALUES (NEW.email, NEW.password_hash, 'ENSEIGNANT', true, NEW.nom)
+    RETURNING id INTO v_utilisateur_id;
+
+    -- Créer l'enseignant
+    INSERT INTO "Enseignant" (utilisateur_id)
+    VALUES (v_utilisateur_id)
+    RETURNING enseignant_id INTO v_enseignant_id;
+
+    -- Retourner les IDs créés
+    NEW.utilisateur_id_created := v_utilisateur_id;
+    NEW.enseignant_id_created := v_enseignant_id;
+
+    RETURN NEW;
+END;
+$$;
+
+alter function fn_creer_enseignant() owner to m1user1_03;
+
+create trigger trg_creer_enseignant
+    instead of insert
+    on v_action_creer_enseignant
+    for each row
+execute procedure fn_creer_enseignant();
+
+create function fn_creer_secretaire() returns trigger
+    security definer
+    language plpgsql
+as
+$$
+DECLARE
+    v_utilisateur_id INTEGER;
+    v_secretaire_id INTEGER;
+BEGIN
+    -- Vérifier unicité email
+    IF EXISTS (SELECT 1 FROM "Utilisateur" WHERE email = NEW.email) THEN
+        RAISE EXCEPTION 'Email déjà utilisé : %', NEW.email;
+    END IF;
+
+    -- Créer l'utilisateur
+    INSERT INTO "Utilisateur" (email, password_hash, role, actif, nom)
+    VALUES (NEW.email, NEW.password_hash, 'SECRETAIRE', true, NEW.nom)
+    RETURNING id INTO v_utilisateur_id;
+
+    -- Créer la secrétaire
+    INSERT INTO "Secretaire" (utilisateur_id, en_conge)
+    VALUES (v_utilisateur_id, false)
+    RETURNING secretaire_id INTO v_secretaire_id;
+
+    -- Retourner les IDs créés
+    NEW.utilisateur_id_created := v_utilisateur_id;
+    NEW.secretaire_id_created := v_secretaire_id;
+
+    RETURN NEW;
+END;
+$$;
+
+alter function fn_creer_secretaire() owner to m1user1_03;
+
+create trigger trg_creer_secretaire
+    instead of insert
+    on v_action_creer_secretaire
+    for each row
+execute procedure fn_creer_secretaire();
 
 create operator <-> (procedure = cash_dist, leftarg = money, rightarg = money, commutator = <->);
 
