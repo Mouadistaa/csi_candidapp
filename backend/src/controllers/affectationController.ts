@@ -38,7 +38,7 @@ export async function getPending(_req: Request, res: Response) {
  * Valider une candidature et créer l'affectation de stage
  * @route POST /api/affectations
  */
-export async function validate(req: Request, res: Response) {
+export async function validerAffectation(req: Request, res: Response) {
     const { candidature_id }: PayloadValidation = req.body;
 
     // Validation du payload
@@ -114,7 +114,7 @@ export async function validate(req: Request, res: Response) {
  * Refuser une candidature (Refus Pédagogique)
  * @route POST /api/affectations/refuse
  */
-export async function refuseCandidature(req: Request, res: Response) {
+export async function refuserAffectation(req: Request, res: Response) {
     const { candidature_id }: PayloadValidation = req.body;
 
     // Validation du payload

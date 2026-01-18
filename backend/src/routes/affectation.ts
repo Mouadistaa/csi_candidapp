@@ -1,5 +1,5 @@
 import express from 'express';
-import { getPending, validate, refuseCandidature } from '../controllers/affectationController';
+import { getPending, validerAffectation, refuserAffectation } from '../controllers/affectationController';
 
 const router = express.Router();
 
@@ -7,9 +7,9 @@ const router = express.Router();
 router.get('/pending', getPending);
 
 // POST /api/affectations - Valider une candidature (créer l'affectation)
-router.post('/', validate);
+router.post('/', validerAffectation);
 
 // POST /api/affectations/refuse - Refuser une candidature (refus pédagogique)
-router.post('/refuse', refuseCandidature);
+router.post('/refuse', refuserAffectation);
 
 export default router;
